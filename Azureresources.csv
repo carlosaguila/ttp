@@ -1,0 +1,10 @@
+SEP=,
+NAME,TYPE,LOCATION,
+"apiatl","API Management service","Central US"
+"ASP-Atlas-81ba","App Service plan","Central US"
+"atlapi","Azure Cosmos DB API for MongoDB account","West US"
+"Atlas33","Virtual network","West Europe"
+"AtlasICE","Function App","Central US"
+"AtlasICE","Application Insights","Central US"
+"storage35","Storage account","East US"
+"string3581321","SQL server","East US"

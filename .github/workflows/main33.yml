@@ -1,0 +1,2166 @@
+
+
+name: CI
+
+
+on:
+ 
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+    
+    name: 
+    on:
+      
+      push:
+       branches: [ main ]
+      
+      pull_request:
+   
+          branches: [ main ]
+
+
+  workflow_dispatch:
+
+
+jobs: get request
+build:
+ 
+    runs-on: ubuntu-latest
+
+  
+    steps:
+  
+      - uses: actions/checkout@v2
+
+      - name: Run a one-line script
+        run: echo Hello, world!
+
+    
+      - name: Run a multi-line script
+        run: |
+          
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2.4.0
+        with:
+    # Set always-auth in npmrc
+    always-auth: # optional, default is false
+    # Version Spec of the version to use.  Examples: 12.x, 10.15.1, >=10.15.0
+    node-version: # optional
+    # Target architecture for Node to use. Examples: x86, x64. Will use system architecture by default.
+    architecture: # optional
+    # Set this option if you want the action to check for the latest available version that satisfies the version spec
+    check-latest: # optional
+    # Optional registry to set up for auth. Will set the registry in a project level .npmrc and .yarnrc file, and set up auth to read in from env.NODE_AUTH_TOKEN
+    registry-url: # optional
+    # Optional scope for authenticating against scoped registries
+    scope: # optional
+    # Used to pull node distributions from node-versions.  Since there's a default, this is typically not supplied by the user.
+    token: # optional, default is ${{ github.token }}
+    # Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm
+    cache: # optional
+    # Used to specify the path to a dependency file: package-lock.json, yarn.lock, etc. Supports wildcards or a list of file names for caching multiple dependencies.
+    cache-dependency-path: # optional
+    # Deprecated. Use node-version instead. Will not be supported after October 1, 2019
+    version: # optional
+    
+    - name: Setup Go environment
+      uses: actions/setup-go@v2.1.4
+      with:
+    # The Go version to download (if necessary) and use. Supports semver spec and ranges.
+    go-version: # optional
+    # Whether to download only stable versions
+    stable: # optional, default is true
+    # Used to pull node distributions from go-versions.  Since there's a default, this is typically not supplied by the user.
+      token: # optional, default is ${{ github.token }}
+    
+      - name: Setup Node.js environment
+    uses: actions/setup-node@v2.4.0
+    with:
+    # Set always-auth in npmrc
+     always-auth: # optional, default is false
+    # Version Spec of the version to use.  Examples: 12.x, 10.15.1, >=10.15.0
+     node-version: # optional
+    # Target architecture for Node to use. Examples: x86, x64. Will use system architecture by default.
+     architecture: # optional
+    # Set this option if you want the action to check for the latest available version that satisfies the version spec
+     check-latest: # optional
+    # Optional registry to set up for auth. Will set the registry in a project level .npmrc and .yarnrc file, and set up auth to read in from env.NODE_AUTH_TOKEN
+     registry-url: # optional
+    # Optional scope for authenticating against scoped registries
+     scope: # optional
+    # Used to pull node distributions from node-versions.  Since there's a default, this is typically not supplied by the user.
+     token: # optional, default is ${{ github.token }}
+    # Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm
+     cache: # optional
+    # Used to specify the path to a dependency file: package-lock.json, yarn.lock, etc. Supports wildcards or a list of file names for caching multiple dependencies.
+     cache-dependency-path: # optional
+    # Deprecated. Use node-version instead. Will not be supported after October 1, 2019
+     version: # optional
+    
+     steps:
+     - uses: actions/checkout@v2
+     - uses: actions/setup-node@v2
+       with:
+       node-version: '14'
+     - run: npm install
+     - run: npm test
+
+manifest:
+    runs-on: ${{ matrix.os }}
+    strategy:
+    
+     import * as cache from '@actions/cache';
+     import * as core from '@actions/core';
+     import * as glob from '@actions/glob';
+     import path from 'path';
+     import fs from 'fs';
+
+     import {State, Outputs} from './constants';
+     import {
+         getCacheDirectoryPath,
+         getPackageManagerInfo,
+         PackageManagerInfo
+         } from './cache-utils';
+
+     export const restoreCache = async (
+    packageManager: string,
+    cacheDependencyPath?: string
+        ) => {
+          const packageManagerInfo = await getPackageManagerInfo(packageManager);
+          if (!packageManagerInfo) {
+         throw new Error(`Caching for '${packageManager}' is not supported`);
+        }
+        const platform = process.env.RUNNER_OS;
+
+         const cachePath = await getCacheDirectoryPath(
+        packageManagerInfo,
+        packageManager
+      );
+        const lockFilePath = cacheDependencyPath
+    ? cacheDependencyPath
+    : findLockFile(packageManagerInfo);
+      const fileHash = await glob.hashFiles(lockFilePath);
+
+       if (!fileHash) {
+       throw new Error(
+      'Some specified paths were not resolved, unable to cache dependencies.'
+        );
+         }
+
+        const primaryKey = `node-cache-${platform}-${packageManager}-${fileHash}`;
+        core.debug(`primary key is ${primaryKey}`);
+
+        core.saveState(State.CachePrimaryKey, primaryKey);
+
+         const cacheKey = await cache.restoreCache([cachePath], primaryKey);
+
+         if (!cacheKey) {
+         core.info(`${packageManager} cache is not found`);
+          return;
+         }
+
+        core.saveState(State.CacheMatchedKey, cacheKey);
+	
+	  utils.setCacheState(cacheKey);
+
+      const isExactKeyMatch = utils.isExactKeyMatch(primaryKey, cacheKey);
+      utils.setCacheHitOutput(isExactKeyMatch);
+
+        core.info(`Cache restored from key: ${cacheKey}`);
+        
+  };
+
+              const findLockFile = (packageManager: PackageManagerInfo) => {
+              let lockFiles = packageManager.lockFilePatterns;
+              const workspace = process.env.GITHUB_WORKSPACE!;
+              const rootContent = fs.readdirSync(workspace);
+
+  const lockFile = lockFiles.find(item => rootContent.includes(item));
+  if (!lockFile) {
+    throw new Error(
+      `Dependencies lock file is not found in ${workspace}. Supported file patterns: ${lockFiles.toString()}`
+    );
+  }
+
+  return path.join(workspace, lockFile);
+};
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
+using RepoDb.Enumerations;
+using RepoDb.Interfaces;
+using RepoDb.UnitTests.CustomObjects;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq.Expressions;
+
+namespace RepoDb.UnitTests.Interfaces
+{
+    [TestClass]
+    public class ICacheForBaseRepositoryTest
+    {
+        [TestInitialize]
+        public void Initialize()
+        {
+            DbSettingMapper.Add(typeof(CacheDbConnection), new CustomDbSetting(), true);
+            StatementBuilderMapper.Add(typeof(CacheDbConnection), new CustomStatementBuilder(), true);
+        }
+
+        #region SubClasses
+
+        private class CacheDbConnection : CustomDbConnection { }
+
+        private class CacheEntity
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+        }
+
+        private class CacheEntityRepository : BaseRepository<CacheEntity, CacheDbConnection>
+        {
+            public CacheEntityRepository(ICache cache, int cacheItemExpiration)
+                : base("ConnectionString",
+                      0,
+                      ConnectionPersistency.PerCall,
+                      cache,
+                      cacheItemExpiration,
+                      null)
+            { }
+        }
+
+        #endregion
+
+        #region Sync
+
+        [TestMethod]
+        public void TestBaseRepositoryQueryCachingWithoutExpression()
+        {
+            // Prepare
+            var cache = new Mock<ICache>();
+            var cacheKey = "MemoryCacheKey";
+            var cacheItemExpiration = 60;
+            var repository = new CacheEntityRepository(cache.Object, cacheItemExpiration);
+
+            // Act
+            repository.Query(where: (QueryGroup)null,
+                orderBy: null,
+                top: 0,
+                hints: null,
+                cacheKey: cacheKey,
+                transaction: null);
+
+            // Assert
+            cache.Verify(c => c.Get(It.Is<string>(s => s == cacheKey),
+                It.IsAny<bool>()), Times.Once);
+            cache.Verify(c => c.Add(It.Is<string>(s => s == cacheKey),
+                It.IsAny<object>(),
+                It.Is<int>(i => i == cacheItemExpiration),
+                It.IsAny<bool>()), Times.Once);
+        }
+
+        [TestMethod]
+        public void TestBaseRepositoryQueryCachingViaDynamics()
+        {
+            // Prepare
+            var cache = new Mock<ICache>();
+            var cacheKey = "MemoryCacheKey";
+            var cacheItemExpiration = 60;
+            var repository = new CacheEntityRepository(cache.Object, cacheItemExpiration);
+
+            // Act
+            repository.Query((object)null, /* whereOrPrimaryKey */
+                (IEnumerable<OrderField>)null, /* orderBy */
+                (int?)null, /* top */
+                (string)null, /* hints */
+                cacheKey, /* cacheKey */
+                (IDbTransaction)null);
+
+            // Assert
+            cache.Verify(c => c.Get(It.Is<string>(s => s == cacheKey),
+                It.IsAny<bool>()), Times.Once);
+            cache.Verify(c => c.Add(It.Is<string>(s => s == cacheKey),
+                It.IsAny<object>(),
+                It.Is<int>(i => i == cacheItemExpiration),
+                It.IsAny<bool>()), Times.Once);
+        }
+
+        [TestMethod]
+        public void TestBaseRepositoryQueryCachingViaQueryField()
+        {
+            // Prepare
+            var cache = new Mock<ICache>();
+            var cacheKey = "MemoryCacheKey";
+            var cacheItemExpiration = 60;
+            var repository = new CacheEntityRepository(cache.Object, cacheItemExpiration);
+
+            // Act
+            repository.Query(where: (QueryField)null,
+                orderBy: null,
+                top: 0,
+                hints: null,
+                cacheKey: cacheKey,
+                transaction: null);
+
+            // Assert
+            cache.Verify(c => c.Get(It.Is<string>(s => s == cacheKey),
+                It.IsAny<bool>()), Times.Once);
+            cache.Verify(c => c.Add(It.Is<string>(s => s == cacheKey),
+                It.IsAny<object>(),
+                It.Is<int>(i => i == cacheItemExpiration),
+                It.IsAny<bool>()), Times.Once);
+        }
+
+        [TestMethod]
+        public void TestBaseRepositoryQueryCachingViaQueryFields()
+        {
+            // Prepare
+            var cache = new Mock<ICache>();
+            var cacheKey = "MemoryCacheKey";
+            var cacheItemExpiration = 60;
+            var repository = new CacheEntityRepository(cache.Object, cacheItemExpiration);
+
+            // Act
+            repository.Query(where: (IEnumerable<QueryField>)null,
+                orderBy: null,
+                top: 0,
+                hints: null,
+                cacheKey: cacheKey,
+                transaction: null);
+
+            // Assert
+            cache.Verify(c => c.Get(It.Is<string>(s => s == cacheKey),
+                It.IsAny<bool>()), Times.Once);
+            cache.Verify(c => c.Add(It.Is<string>(s => s == cacheKey),
+                It.IsAny<object>(),
+                It.Is<int>(i => i == cacheItemExpiration),
+                It.IsAny<bool>()), Times.Once);
+        }
+
+        [TestMethod]
+        public void TestBaseRepositoryQueryCachingViaExpression()
+        {
+            // Prepare
+            var cache = new Mock<ICache>();
+            var cacheKey = "MemoryCacheKey";
+            var cacheItemExpiration = 60;
+            var repository = new CacheEntityRepository(cache.Object, cacheItemExpiration);
+
+            // Act
+            repository.Query(where: (Expression<Func<CacheEntity, bool>>)null,
+                orderBy: null,
+                top: 0,
+                hints: null,
+                cacheKey: cacheKey,
+                transaction: null);
+
+            // Assert
+            cache.Verify(c => c.Get(It.Is<string>(s => s == cacheKey),
+                It.IsAny<bool>()), Times.Once);
+            cache.Verify(c => c.Add(It.Is<string>(s => s == cacheKey),
+                It.IsAny<object>(),
+                It.Is<int>(i => i == cacheItemExpiration),
+                It.IsAny<bool>()), Times.Once);
+        }
+
+        [TestMethod]
+        public void TestBaseRepositoryQueryCachingViaQueryGroup()
+        {
+            // Prepare
+            var cache = new Mock<ICache>();
+            var cacheKey = "MemoryCacheKey";
+            var cacheItemExpiration = 60;
+            var repository = new CacheEntityRepository(cache.Object, cacheItemExpiration);
+
+            // Act
+            repository.Query(where: (QueryGroup)null,
+                orderBy: null,
+                top: 0,
+                hints: null,
+                cacheKey: cacheKey,
+                transaction: null);
+
+            // Assert
+            cache.Verify(c => c.Get(It.Is<string>(s => s == cacheKey),
+                It.IsAny<bool>()), Times.Once);
+            cache.Verify(c => c.Add(It.Is<string>(s => s == cacheKey),
+                It.IsAny<object>(),
+                It.Is<int>(i => i == cacheItemExpiration),
+                It.IsAny<bool>()), Times.Once);
+        }
+
+        #endregion
+
+        #region Async
+
+        [TestMethod]
+        public void TestBaseRepositoryQueryAsyncCachingWithoutExpression()
+        {
+            // Prepare
+            var cache = new Mock<ICache>();
+            var cacheKey = "MemoryCacheKey";
+            var cacheItemExpiration = 60;
+            var repository = new CacheEntityRepository(cache.Object, cacheItemExpiration);
+
+            // Act
+            var result = repository.QueryAsync(where: (QueryGroup)null,
+                orderBy: null,
+                top: 0,
+                hints: null,
+                cacheKey: cacheKey,
+                transaction: null).Result;
+
+            // Assert
+            cache.Verify(c => c.Get(It.Is<string>(s => s == cacheKey),
+                It.IsAny<bool>()), Times.Once);
+            cache.Verify(c => c.Add(It.Is<string>(s => s == cacheKey),
+                It.IsAny<object>(),
+                It.Is<int>(i => i == cacheItemExpiration),
+                It.IsAny<bool>()), Times.Once);
+        }
+
+        [TestMethod]
+        public void TestBaseRepositoryQueryAsyncCachingViaDynamics()
+        {
+            // Prepare
+            var cache = new Mock<ICache>();
+            var cacheKey = "MemoryCacheKey";
+            var cacheItemExpiration = 60;
+            var repository = new CacheEntityRepository(cache.Object, cacheItemExpiration);
+
+            // Act
+            var result = repository.QueryAsync((object)null, /* whereOrPrimaryKey */
+                (IEnumerable<OrderField>)null, /* orderBy */
+                (int?)null, /* top */
+                (string)null, /* hints */
+                cacheKey, /* cacheKey */
+                (IDbTransaction)null).Result;
+
+            // Assert
+            cache.Verify(c => c.Get(It.Is<string>(s => s == cacheKey),
+                It.IsAny<bool>()), Times.Once);
+            cache.Verify(c => c.Add(It.Is<string>(s => s == cacheKey),
+                It.IsAny<object>(),
+                It.Is<int>(i => i == cacheItemExpiration),
+                It.IsAny<bool>()), Times.Once);
+        }
+
+        [TestMethod]
+        public void TestBaseRepositoryQueryAsyncCachingViaQueryField()
+        {
+            // Prepare
+            var cache = new Mock<ICache>();
+            var cacheKey = "MemoryCacheKey";
+            var cacheItemExpiration = 60;
+            var repository = new CacheEntityRepository(cache.Object, cacheItemExpiration);
+
+            // Act
+            var result = repository.QueryAsync(where: (QueryField)null,
+                orderBy: null,
+                top: 0,
+                hints: null,
+                cacheKey: cacheKey,
+                transaction: null).Result;
+
+            // Assert
+            cache.Verify(c => c.Get(It.Is<string>(s => s == cacheKey),
+                It.IsAny<bool>()), Times.Once);
+            cache.Verify(c => c.Add(It.Is<string>(s => s == cacheKey),
+                It.IsAny<object>(),
+                It.Is<int>(i => i == cacheItemExpiration),
+                It.IsAny<bool>()), Times.Once);
+        }
+
+        [TestMethod]
+        public void TestBaseRepositoryQueryAsyncCachingViaQueryFields()
+        {
+            // Prepare
+            var cache = new Mock<ICache>();
+            var cacheKey = "MemoryCacheKey";
+            var cacheItemExpiration = 60;
+            var repository = new CacheEntityRepository(cache.Object, cacheItemExpiration);
+
+            // Act
+            var result = repository.QueryAsync(where: (IEnumerable<QueryField>)null,
+                orderBy: null,
+                top: 0,
+                hints: null,
+                cacheKey: cacheKey,
+                transaction: null).Result;
+
+            // Assert
+            cache.Verify(c => c.Get(It.Is<string>(s => s == cacheKey),
+                It.IsAny<bool>()), Times.Once);
+            cache.Verify(c => c.Add(It.Is<string>(s => s == cacheKey),
+                It.IsAny<object>(),
+                It.Is<int>(i => i == cacheItemExpiration),
+                It.IsAny<bool>()), Times.Once);
+        }
+
+        [TestMethod]
+        public void TestBaseRepositoryQueryAsyncCachingViaExpression()
+        {
+            // Prepare
+            var cache = new Mock<ICache>();
+            var cacheKey = "MemoryCacheKey";
+            var cacheItemExpiration = 60;
+            var repository = new CacheEntityRepository(cache.Object, cacheItemExpiration);
+
+            // Act
+            var result = repository.QueryAsync(where: (Expression<Func<CacheEntity, bool>>)null,
+                orderBy: null,
+                top: 0,
+                hints: null,
+                cacheKey: cacheKey,
+                transaction: null).Result;
+
+            // Assert
+            cache.Verify(c => c.Get(It.Is<string>(s => s == cacheKey),
+                It.IsAny<bool>()), Times.Once);
+            cache.Verify(c => c.Add(It.Is<string>(s => s == cacheKey),
+                It.IsAny<object>(),
+                It.Is<int>(i => i == cacheItemExpiration),
+                It.IsAny<bool>()), Times.Once);
+        }
+
+        [TestMethod]
+        public void TestBaseRepositoryQueryAsyncCachingViaQueryGroup()
+        {
+            // Prepare
+            var cache = new Mock<ICache>();
+            var cacheKey = "MemoryCacheKey";
+            var cacheItemExpiration = 60;
+            var repository = new CacheEntityRepository(cache.Object, cacheItemExpiration);
+
+            // Act
+            var result = repository.QueryAsync(where: (QueryGroup)null,
+                orderBy: null,
+                top: 0,
+                hints: null,
+                cacheKey: cacheKey,
+                transaction: null).Result;
+
+            // Assert
+            cache.Verify(c => c.Get(It.Is<string>(s => s == cacheKey),
+                It.IsAny<bool>()), Times.Once);
+            cache.Verify(c => c.Add(It.Is<string>(s => s == cacheKey),
+                It.IsAny<object>(),
+                It.Is<int>(i => i == cacheItemExpiration),
+                It.IsAny<bool>()), Times.Once);
+        }
+
+        #endregion
+    }
+}
+<!doctype html>
+<html class="no-js" lang="">
+
+<head>
+	<meta charset="utf-8">
+	<title>Hello World : Jenkins Pilepile with Docker with no db</title>
+	<meta name="description" content="Jenkins X">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" media="all" href="style.css" />
+</head>
+
+<body>
+	<div class="cover">
+		<div class="feature">
+			<h1>Hello Node-js App, From aws Cloudbees Blue-Ocean Jenkins Pipeline</h1>
+			<h3>Deploying azures web service using cicd dployment</h3>
+			<div class="brand">
+				Jenkins <strong>X is the latest cicd pipeline with kubernetes</strong>
+				
+			</div>
+			
+		</div>
+		<h3>Jenkins on k8s pipeline, Version: 2.0</h3>
+		<p>Building applications with nodejs using azure devops cicd.</p>
+	</div>
+	<p>Jenkins and Docker Pipeline,Version: 2.0</p>
+</body>
+
+</html>
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.8\build\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props" Condition="Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.8\build\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" />
+  <Import Project="..\packages\Microsoft.Net.Compilers.2.4.0\build\Microsoft.Net.Compilers.props" Condition="Exists('..\packages\Microsoft.Net.Compilers.2.4.0\build\Microsoft.Net.Compilers.props')" />
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>
+    </ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{7F893408-8CCF-46DB-892C-5517F4CE86F7}</ProjectGuid>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>TravelBookAspNetMVCAzure</RootNamespace>
+    <AssemblyName>TravelBookAspNetMVCAzure</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <MvcBuildViews>false</MvcBuildViews>
+    <UseIISExpress>true</UseIISExpress>
+    <Use64BitIISExpress />
+    <IISExpressSSLPort />
+    <IISExpressAnonymousAuthentication />
+    <IISExpressWindowsAuthentication />
+    <IISExpressUseClassicPipelineMode />
+    <UseGlobalApplicationHostFile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeDom.Providers.DotNetCompilerPlatform, Version=1.0.8.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.8\lib\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http.Formatting, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Client.5.2.3\lib\net45\System.Net.Http.Formatting.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Web.DynamicData" />
+    <Reference Include="System.Web.Entity" />
+    <Reference Include="System.Web.ApplicationServices" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Web.Http, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Core.5.2.3\lib\net45\System.Web.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Http.WebHost, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.WebHost.5.2.3\lib\net45\System.Web.Http.WebHost.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Web.Abstractions" />
+    <Reference Include="System.Web.Routing" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.EnterpriseServices" />
+    <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http">
+    </Reference>
+    <Reference Include="System.Net.Http.WebRequest">
+    </Reference>
+    <Reference Include="System.Web.Helpers, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.3\lib\net45\System.Web.Helpers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Mvc, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\packages\Microsoft.AspNet.Mvc.5.2.3\lib\net45\System.Web.Mvc.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Optimization">
+      <HintPath>..\packages\Microsoft.AspNet.Web.Optimization.1.1.3\lib\net40\System.Web.Optimization.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\packages\Microsoft.AspNet.Razor.3.2.3\lib\net45\System.Web.Razor.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.WebPages, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.3\lib\net45\System.Web.WebPages.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.WebPages.Deployment, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.3\lib\net45\System.Web.WebPages.Deployment.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.WebPages.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.3\lib\net45\System.Web.WebPages.Razor.dll</HintPath>
+    </Reference>
+    <Reference Include="WebGrease">
+      <Private>True</Private>
+      <HintPath>..\packages\WebGrease.1.5.2\lib\WebGrease.dll</HintPath>
+    </Reference>
+    <Reference Include="Antlr3.Runtime">
+      <Private>True</Private>
+      <HintPath>..\packages\Antlr.3.4.1.9004\lib\Antlr3.Runtime.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.6.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AspNet.Identity.Core">
+      <HintPath>..\packages\Microsoft.AspNet.Identity.Core.2.2.1\lib\net45\Microsoft.AspNet.Identity.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AspNet.Identity.Owin">
+      <HintPath>..\packages\Microsoft.AspNet.Identity.Owin.2.2.1\lib\net45\Microsoft.AspNet.Identity.Owin.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AspNet.Identity.EntityFramework">
+      <HintPath>..\packages\Microsoft.AspNet.Identity.EntityFramework.2.2.1\lib\net45\Microsoft.AspNet.Identity.EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="Owin">
+      <HintPath>..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Owin">
+      <HintPath>..\packages\Microsoft.Owin.3.0.1\lib\net45\Microsoft.Owin.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Host.SystemWeb">
+      <HintPath>..\packages\Microsoft.Owin.Host.SystemWeb.3.0.1\lib\net45\Microsoft.Owin.Host.SystemWeb.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Security">
+      <HintPath>..\packages\Microsoft.Owin.Security.3.0.1\lib\net45\Microsoft.Owin.Security.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Security.Facebook">
+      <HintPath>..\packages\Microsoft.Owin.Security.Facebook.3.0.1\lib\net45\Microsoft.Owin.Security.Facebook.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Security.Cookies">
+      <HintPath>..\packages\Microsoft.Owin.Security.Cookies.3.0.1\lib\net45\Microsoft.Owin.Security.Cookies.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Security.OAuth">
+      <HintPath>..\packages\Microsoft.Owin.Security.OAuth.3.0.1\lib\net45\Microsoft.Owin.Security.OAuth.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Security.Google">
+      <HintPath>..\packages\Microsoft.Owin.Security.Google.3.0.1\lib\net45\Microsoft.Owin.Security.Google.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Security.Twitter">
+      <HintPath>..\packages\Microsoft.Owin.Security.Twitter.3.0.1\lib\net45\Microsoft.Owin.Security.Twitter.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Security.MicrosoftAccount">
+      <HintPath>..\packages\Microsoft.Owin.Security.MicrosoftAccount.3.0.1\lib\net45\Microsoft.Owin.Security.MicrosoftAccount.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ApplicationInsights">
+      <HintPath>..\packages\Microsoft.ApplicationInsights.2.2.0\lib\net45\Microsoft.ApplicationInsights.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.Agent.Intercept">
+      <HintPath>..\packages\Microsoft.ApplicationInsights.Agent.Intercept.2.0.6\lib\net45\Microsoft.AI.Agent.Intercept.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.DependencyCollector">
+      <HintPath>..\packages\Microsoft.ApplicationInsights.DependencyCollector.2.2.0\lib\net45\Microsoft.AI.DependencyCollector.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.PerfCounterCollector">
+      <HintPath>..\packages\Microsoft.ApplicationInsights.PerfCounterCollector.2.2.0\lib\net45\Microsoft.AI.PerfCounterCollector.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.ServerTelemetryChannel">
+      <HintPath>..\packages\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.2.2.0\lib\net45\Microsoft.AI.ServerTelemetryChannel.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.WindowsServer">
+      <HintPath>..\packages\Microsoft.ApplicationInsights.WindowsServer.2.2.0\lib\net45\Microsoft.AI.WindowsServer.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.Web">
+      <HintPath>..\packages\Microsoft.ApplicationInsights.Web.2.2.0\lib\net45\Microsoft.AI.Web.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="App_Start\BundleConfig.cs" />
+    <Compile Include="App_Start\FilterConfig.cs" />
+    <Compile Include="App_Start\IdentityConfig.cs" />
+    <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="App_Start\Startup.Auth.cs" />
+    <Compile Include="App_Start\WebApiConfig.cs" />
+    <Compile Include="Controllers\AccountController.cs" />
+    <Compile Include="Controllers\AgencijaAzuresController.cs" />
+    <Compile Include="Controllers\DestinacijaAzuresController.cs" />
+    <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\HotelAzuresController.cs" />
+    <Compile Include="Controllers\KarticaAzuresController.cs" />
+    <Compile Include="Controllers\KorisnikAzuresController.cs" />
+    <Compile Include="Controllers\ManageController.cs" />
+    <Compile Include="Controllers\PrevozAzuresController.cs" />
+    <Compile Include="Controllers\PutovanjeAzuresController.cs" />
+    <Compile Include="Controllers\RezervisanaPutovanjaAzuresController.cs" />
+    <Compile Include="Global.asax.cs">
+      <DependentUpon>Global.asax</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201805240105163_InitialCreate.cs" />
+    <Compile Include="Migrations\201805240105163_InitialCreate.Designer.cs">
+      <DependentUpon>201805240105163_InitialCreate.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\Configuration.cs" />
+    <Compile Include="Models\AccountViewModels.cs" />
+    <Compile Include="Models\AgencijaAzure.cs" />
+    <Compile Include="Models\DestinacijaAzure.cs" />
+    <Compile Include="Models\Globalna.cs" />
+    <Compile Include="Models\HotelAzure.cs" />
+    <Compile Include="Models\IdentityModels.cs" />
+    <Compile Include="Models\KarticaAzure.cs" />
+    <Compile Include="Models\KorisnikAzure.cs" />
+    <Compile Include="Models\ManageViewModels.cs" />
+    <Compile Include="Models\PrevozAzure.cs" />
+    <Compile Include="Models\PutovanjeAzure.cs" />
+    <Compile Include="Models\RezervisanaPutovanjaAzure.cs" />
+    <Compile Include="Models\TravelBookModel.cs" />
+    <Compile Include="Models\TravelContext.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Startup.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Content\bootstrap.css" />
+    <Content Include="Content\bootstrap.min.css" />
+    <Content Include="favicon.ico" />
+    <Content Include="fonts\glyphicons-halflings-regular.svg" />
+    <Content Include="Global.asax" />
+    <Content Include="Content\Site.css" />
+    <Content Include="Scripts\bootstrap.js" />
+    <Content Include="Scripts\bootstrap.min.js" />
+    <Content Include="ApplicationInsights.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="Scripts\jquery-1.10.2.intellisense.js" />
+    <Content Include="Scripts\jquery-1.10.2.js" />
+    <Content Include="Scripts\jquery-1.10.2.min.js" />
+    <None Include="Scripts\jquery.validate-vsdoc.js" />
+    <Content Include="Scripts\jquery.validate.js" />
+    <Content Include="Scripts\jquery.validate.min.js" />
+    <Content Include="Scripts\jquery.validate.unobtrusive.js" />
+    <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
+    <Content Include="Scripts\modernizr-2.6.2.js" />
+    <Content Include="Scripts\respond.js" />
+    <Content Include="Scripts\respond.min.js" />
+    <Content Include="Web.config" />
+    <Content Include="Web.Debug.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </Content>
+    <Content Include="Web.Release.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </Content>
+    <Content Include="Views\Web.config" />
+    <Content Include="Views\_ViewStart.cshtml" />
+    <Content Include="Views\Shared\Error.cshtml" />
+    <Content Include="Views\Shared\_Layout.cshtml" />
+    <Content Include="Views\Home\About.cshtml" />
+    <Content Include="Views\Home\Contact.cshtml" />
+    <Content Include="Views\Home\Index.cshtml" />
+    <Content Include="Views\Account\_ExternalLoginsListPartial.cshtml" />
+    <Content Include="Views\Account\ConfirmEmail.cshtml" />
+    <Content Include="Views\Account\ExternalLoginConfirmation.cshtml" />
+    <Content Include="Views\Account\ExternalLoginFailure.cshtml" />
+    <Content Include="Views\Account\ForgotPassword.cshtml" />
+    <Content Include="Views\Account\ForgotPasswordConfirmation.cshtml" />
+    <Content Include="Views\Account\Login.cshtml" />
+    <Content Include="Views\Account\Register.cshtml" />
+    <Content Include="Views\Account\ResetPassword.cshtml" />
+    <Content Include="Views\Account\ResetPasswordConfirmation.cshtml" />
+    <Content Include="Views\Account\SendCode.cshtml" />
+    <Content Include="Views\Account\VerifyCode.cshtml" />
+    <Content Include="Views\Manage\AddPhoneNumber.cshtml" />
+    <Content Include="Views\Manage\ChangePassword.cshtml" />
+    <Content Include="Views\Manage\Index.cshtml" />
+    <Content Include="Views\Manage\ManageLogins.cshtml" />
+    <Content Include="Views\Manage\SetPassword.cshtml" />
+    <Content Include="Views\Manage\VerifyPhoneNumber.cshtml" />
+    <Content Include="Views\Shared\Lockout.cshtml" />
+    <Content Include="Views\Shared\_LoginPartial.cshtml" />
+    <Content Include="Views\AgencijaAzures\Create.cshtml" />
+    <Content Include="Views\AgencijaAzures\Delete.cshtml" />
+    <Content Include="Views\AgencijaAzures\Details.cshtml" />
+    <Content Include="Views\AgencijaAzures\Edit.cshtml" />
+    <Content Include="Views\AgencijaAzures\Index1.cshtml" />
+    <Content Include="Views\DestinacijaAzures\Create.cshtml" />
+    <Content Include="Views\DestinacijaAzures\Delete.cshtml" />
+    <Content Include="Views\DestinacijaAzures\Details.cshtml" />
+    <Content Include="Views\DestinacijaAzures\Edit.cshtml" />
+    <Content Include="Views\DestinacijaAzures\Index.cshtml" />
+    <Content Include="Views\HotelAzures\Create.cshtml" />
+    <Content Include="Views\HotelAzures\Delete.cshtml" />
+    <Content Include="Views\HotelAzures\Details.cshtml" />
+    <Content Include="Views\HotelAzures\Edit.cshtml" />
+    <Content Include="Views\HotelAzures\Index.cshtml" />
+    <Content Include="Views\KorisnikAzures\Create.cshtml" />
+    <Content Include="Views\KorisnikAzures\Delete.cshtml" />
+    <Content Include="Views\KorisnikAzures\Details.cshtml" />
+    <Content Include="Views\KorisnikAzures\Edit.cshtml" />
+    <Content Include="Views\KorisnikAzures\Index.cshtml" />
+    <Content Include="Views\PrevozAzures\Create.cshtml" />
+    <Content Include="Views\PrevozAzures\Delete.cshtml" />
+    <Content Include="Views\PrevozAzures\Details.cshtml" />
+    <Content Include="Views\PrevozAzures\Edit.cshtml" />
+    <Content Include="Views\PrevozAzures\Index.cshtml" />
+    <Content Include="Views\PutovanjeAzures\Create.cshtml" />
+    <Content Include="Views\PutovanjeAzures\Delete.cshtml" />
+    <Content Include="Views\PutovanjeAzures\Details.cshtml" />
+    <Content Include="Views\PutovanjeAzures\Edit.cshtml" />
+    <Content Include="Views\PutovanjeAzures\Index.cshtml" />
+    <Content Include="Views\RezervisanaPutovanjaAzures\Create.cshtml" />
+    <Content Include="Views\RezervisanaPutovanjaAzures\Delete.cshtml" />
+    <Content Include="Views\RezervisanaPutovanjaAzures\Details.cshtml" />
+    <Content Include="Views\RezervisanaPutovanjaAzures\Edit.cshtml" />
+    <Content Include="Views\RezervisanaPutovanjaAzures\Index.cshtml" />
+    <Content Include="Views\KarticaAzures\Create.cshtml" />
+    <Content Include="Views\KarticaAzures\Delete.cshtml" />
+    <Content Include="Views\KarticaAzures\Details.cshtml" />
+    <Content Include="Views\KarticaAzures\Edit.cshtml" />
+    <Content Include="Views\KarticaAzures\Index.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="App_Data\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="fonts\glyphicons-halflings-regular.woff" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="fonts\glyphicons-halflings-regular.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="fonts\glyphicons-halflings-regular.eot" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+    <Content Include="Scripts\jquery-1.10.2.min.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\201805240105163_InitialCreate.resx">
+      <DependentUpon>201805240105163_InitialCreate.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
+  <Target Name="MvcBuildViews" AfterTargets="AfterBuild" Condition="'$(MvcBuildViews)'=='true'">
+    <AspNetCompiler VirtualPath="temp" PhysicalPath="$(WebProjectOutputDir)" />
+  </Target>
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>False</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>50062</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>http://localhost:50062/</IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+          <UseCustomServer>False</UseCustomServer>
+          <CustomServerUrl>
+          </CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Microsoft.Net.Compilers.2.4.0\build\Microsoft.Net.Compilers.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Net.Compilers.2.4.0\build\Microsoft.Net.Compilers.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.8\build\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.8\build\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props'))" />
+  </Target>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target> -->
+</Project>
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.Entity;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Web;
+using System.Web.Mvc;
+using Models;
+
+namespace HSE.Controllers
+{
+    [Authorize(Roles = "Administrator,company,supervisor")]
+    public class EnviromentsController : Infrastructure.BaseController
+    {
+        private DatabaseContext db = new DatabaseContext();
+
+        public ActionResult CompanyTypeList(Guid enviromentTypeId)
+        {
+            List<CompanyType> companyTypes = db.CompanyTypes.Where(c => c.IsDeleted == false && c.IsActive).ToList();
+            ViewBag.baseUrl = "Enviroments";
+            ViewBag.Title = GetTitle(enviromentTypeId.ToString());
+            ViewBag.enviromentTypeId = enviromentTypeId;
+            return View(companyTypes);
+        }
+
+        public string GetTitle(string enviromentTypeId)
+        {
+            if (enviromentTypeId == "5fe6b043-e89e-4e6c-9d08-63b8f53dacf4" ||
+                enviromentTypeId == "e0fc1ce2-cb91-4790-91cb-4665169ecb6d" ||
+                enviromentTypeId == "04cad662-c587-4439-bb00-42a6b6971110" ||
+                enviromentTypeId == "d666e68e-1112-40e0-bc0a-1e5a3789d045" ||
+                enviromentTypeId == "ba6c1d7d-5388-463e-9af6-9dfbe9e59963" ||
+                enviromentTypeId == "cce19caf-6e0e-4ead-8b3d-9f72d4986451" ||
+                enviromentTypeId == "4cf9a83c-e9c0-433f-8b6e-bb75b8268de7" ||
+                enviromentTypeId == "570458bc-a2f4-41b0-95f1-a55b5b65824d")
+                return "فهرست بهداشت";
+                return "فهرست محیط زیست";
+        }
+
+        public ActionResult List(Guid? id, Guid enviromentTypeId)
+        {
+            List<Company> companies;
+
+            var identity = (System.Security.Claims.ClaimsIdentity)User.Identity;
+            string uid = identity.FindFirst(System.Security.Claims.ClaimTypes.Name).Value;
+            string roleName = identity.FindFirst(System.Security.Claims.ClaimTypes.Role).Value;
+
+            if (roleName == "supervisor")
+            {
+                Guid userId = new Guid(uid);
+
+                companies = db.Companies
+                    .Where(c => c.SupervisorUserId == userId && c.IsDeleted == false && c.IsActive).ToList();
+            }
+            else
+            {
+                if (id == null)
+                    companies = db.Companies.Where(c => c.IsDeleted == false && c.IsActive)
+                        .ToList();
+
+                else
+                    companies = db.Companies.Where(c => c.CompanyTypeId == id && c.IsDeleted == false && c.IsActive)
+                        .ToList();
+
+            }
+            EnviromentType enviromentType = db.EnviromentTypes.Find(enviromentTypeId);
+            ViewBag.TypeTitle = enviromentType.Title;
+         
+            ViewBag.enviromentTypeId = enviromentTypeId;
+            return View(companies.OrderBy(c => c.Title).ToList());
+        }
+        public ActionResult Index(Guid? id, Guid enviromentTypeId)
+        {
+            var identity = (System.Security.Claims.ClaimsIdentity)User.Identity;
+            string uid = identity.FindFirst(System.Security.Claims.ClaimTypes.Name).Value;
+            string roleTitle = identity.FindFirst(System.Security.Claims.ClaimTypes.Role).Value;
+
+            ViewBag.roleTitle = roleTitle;
+            Guid userId = new Guid(uid);
+            Guid? companyId = null;
+
+            if (roleTitle == "company")
+            {
+                User user = db.Users.Find(userId);
+
+                companyId = user.CompanyId;
+            }
+            else
+            {
+                companyId = id;
+            }
+
+            var enviroments = db.Enviroments.Include(p => p.Company).Include(c => c.EnviromentType)
+                .Where(p => p.CompanyId == companyId && p.EnviromentTypeId == enviromentTypeId && p.IsDeleted == false)
+                .OrderByDescending(p => p.PermitStatusId).Include(p => p.PermitStatus);
+
+            ViewBag.companyId = companyId;
+            ViewBag.enviromentTypeId = enviromentTypeId;
+            ViewBag.Title = GetTitle(enviromentTypeId.ToString());
+
+            return View(enviroments.ToList());
+        }
+
+
+
+        public ActionResult UploadFile(Guid id, Guid enviromentTypeId)
+        {
+           
+            ViewBag.companyId = id;
+            ViewBag.enviromentTypeId = enviromentTypeId;
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult UploadFile(Enviroment enviroment, HttpPostedFileBase fileupload, Guid id, Guid enviromentTypeId)
+        {
+
+            if (ModelState.IsValid)
+            {
+                #region Upload and resize image if needed
+
+                if (fileupload != null)
+                {
+                    string filename = Path.GetFileName(fileupload.FileName);
+                    string newFilename = Guid.NewGuid().ToString().Replace("-", string.Empty)
+                                         + Path.GetExtension(filename);
+
+                    string newFilenameUrl = "/Uploads/enviroment/" + newFilename;
+                    string physicalFilename = Server.MapPath(newFilenameUrl);
+
+                    fileupload.SaveAs(physicalFilename);
+
+                    enviroment.FileUrl = newFilenameUrl;
+                    enviroment.PermitStatusId = db.PermitStatuses.FirstOrDefault(c => c.Code == 1).Id;
+                }
+                else
+                {
+                    ModelState.AddModelError("noUpload","فایل مورد نظر را بارگزاری کنید");
+                    ViewBag.companyId = id;
+                    ViewBag.enviromentTypeId = enviromentTypeId;
+                    return View();
+                }
+                #endregion
+
+                enviroment.EnviromentTypeId = enviromentTypeId;
+                enviroment.CompanyId = id;
+                enviroment.IsActive = true;
+                enviroment.IsDeleted = false;
+                enviroment.CreationDate = DateTime.Now;
+                enviroment.Id = Guid.NewGuid();
+                db.Enviroments.Add(enviroment);
+                db.SaveChanges();
+
+                Company co = db.Companies.Find(enviroment.CompanyId);
+                Helpers.NotificationHelper.InsertNotification(co.Title, "/Enviroments/Index/" + enviroment.CompanyId + "?enviromentTypeId=" + enviromentTypeId, "محیط زیست");
+                Helpers.NotificationHelper.InsertNotificationForSup(co.Id,co.Title, "/Enviroments/Index/" + enviroment.CompanyId + "?enviromentTypeId=" + enviromentTypeId, "محیط زیست");
+
+                return RedirectToAction("Index", new { id = id, enviromentTypeId = enviromentTypeId });
+            }
+
+            return View(enviroment);
+        }
+
+        public ActionResult SuperVisorConfirmation(Guid? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+            Enviroment enviroment = db.Enviroments.Find(id);
+            if (enviroment == null)
+            {
+                return HttpNotFound();
+            }
+
+            ViewBag.PermitStatusId = new SelectList(db.PermitStatuses, "Id", "Title", enviroment.PermitStatusId);
+            ViewBag.companyId = enviroment.CompanyId;
+            ViewBag.enviromentTypeId = enviroment.EnviromentTypeId;
+            return View(enviroment);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult SuperVisorConfirmation(Enviroment enviroment)
+        {
+
+            if (ModelState.IsValid)
+            {
+                enviroment.IsDeleted = false;
+                enviroment.LastModifiedDate = DateTime.Now;
+                db.Entry(enviroment).State = EntityState.Modified;
+                db.SaveChanges();
+
+                Helpers.NotificationHelper.InsertNotificationForCompany(enviroment.CompanyId, "ناظر", "/enviroments/index?enviromentTypeId=" + enviroment.EnviromentTypeId, "محیط زیست و بهداشت", "edit");
+
+                return RedirectToAction("Index", new { id = enviroment.CompanyId, enviromentTypeId = enviroment.EnviromentTypeId });
+            }
+
+            return View(enviroment);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                db.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+
+
+        public ActionResult Edit(Guid? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+            Enviroment enviroment = db.Enviroments.Find(id);
+            if (enviroment == null)
+            {
+                return HttpNotFound();
+            }
+            return View(enviroment);
+        }
+
+      
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Edit(Enviroment enviroment, HttpPostedFileBase fileupload)
+        {
+            if (ModelState.IsValid)
+            {
+                if (fileupload != null)
+                {
+                    string filename = Path.GetFileName(fileupload.FileName);
+                    string newFilename = Guid.NewGuid().ToString().Replace("-", string.Empty)
+                                         + Path.GetExtension(filename);
+
+                    string newFilenameUrl = "/Uploads/enviroment/" + newFilename;
+                    string physicalFilename = Server.MapPath(newFilenameUrl);
+
+                    fileupload.SaveAs(physicalFilename);
+
+                    enviroment.FileUrl = newFilenameUrl;
+                    enviroment.PermitStatusId = db.PermitStatuses.FirstOrDefault(c => c.Code == 1).Id;
+                }
+
+                enviroment.IsDeleted = false;
+                enviroment.LastModifiedDate = DateTime.Now;
+                db.Entry(enviroment).State = EntityState.Modified;
+                db.SaveChanges();
+                return RedirectToAction("Index", new { id = enviroment.CompanyId, enviromentTypeId = enviroment.EnviromentTypeId });
+            }
+            return View(enviroment);
+        }
+
+        public ActionResult Delete(Guid? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+            Enviroment enviroment = db.Enviroments.Find(id);
+            if (enviroment == null)
+            {
+                return HttpNotFound();
+            }
+            return View(enviroment);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public ActionResult DeleteConfirmed(Guid id)
+        {
+            Enviroment enviroment = db.Enviroments.Find(id);
+            enviroment.IsDeleted = true;
+            enviroment.DeletionDate = DateTime.Now;
+
+            db.SaveChanges();
+            return RedirectToAction("Index", new { id = enviroment.CompanyId, enviromentTypeId = enviroment.EnviromentTypeId });
+        }
+
+    }
+    .roadmap,
+.roadmap__events {
+    position: relative;
+    margin: 0 auto;
+}
+
+.roadmap {
+    width:90%;
+}
+
+.roadmap__events {
+    width: -webkit-calc(100% - 200px);
+    width: calc(100% - 200px);
+    padding: 200px 0;
+}
+
+.roadmap__events:after {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    display: block;
+    content: "";
+    width: 0%;
+    height: 4px;
+    background-color: #037ef3;
+    border-radius: 2px;
+    -webkit-transition: all .5s linear;
+    -o-transition: all .5s linear;
+    transition: all .5s linear;
+}
+
+.roadmap__events__event {
+    position: absolute;
+    width: 280px;
+    height: 200px;
+    margin-left: -140px;
+    list-style: none;
+    font-size: 16px;
+}
+
+.roadmap__events__event:after,
+.roadmap__events__event:before {
+    position: absolute;
+    content: "";
+    display: block;
+    background-color: #037ef3;
+    -webkit-transition: all .3s cubic-bezier(.25, .1, .25, 1.3);
+    -o-transition: all .3s cubic-bezier(.25, .1, .25, 1.3);
+    transition: all .3s cubic-bezier(.25, .1, .25, 1.3);
+}
+
+.roadmap__events__event:before {
+    width: 20px;
+    height: 20px;
+    border-radius: 20px;
+    left: 50%;
+    -webkit-transform: translateX(-50%);
+    -ms-transform: translateX(-50%);
+    transform: translateX(-50%);
+    -webkit-transform: scale(0);
+    -ms-transform: scale(0);
+    -o-transform: scale(0);
+    transform: scale(0);
+}
+
+.roadmap__events__event:after {
+    width: 4px;
+    height: 0;
+    border-radius: 2px;
+    left: 50%;
+    -webkit-transform: translateX(-50%);
+    -ms-transform: translateX(-50%);
+    -o-transform: translateX(-50%);
+    transform: translateX(-50%);
+}
+
+.roadmap__events__event .event {
+    position: absolute;
+    display: block;
+    text-align: center;
+    width: 100%;
+    -webkit-transition: all .3s cubic-bezier(.25, .1, .25, 1.3);
+    -o-transition: all .3s cubic-bezier(.25, .1, .25, 1.3);
+    transition: all .3s cubic-bezier(.25, .1, .25, 1.3);
+    -webkit-transform: scale(0);
+    -ms-transform: scale(0);
+    -o-transform: scale(0);
+    transform: scale(0);
+}
+
+.roadmap__events__event .event .event__date {
+    font-weight: 600
+}
+
+.roadmap__events__event .event .event__content small {
+    display: block;
+}
+
+.roadmap__events__event:nth-child(odd) {
+    bottom: 0;
+}
+
+.roadmap__events__event:nth-child(odd):before {
+    top: -8px;
+}
+
+.roadmap__events__event:nth-child(odd):after {
+    top: 0;
+}
+
+.roadmap__events__event:nth-child(odd) .event {
+    top: 80px;
+}
+
+.roadmap__events__event:nth-child(even) {
+    top: 0;
+}
+
+.roadmap__events__event:nth-child(even):before {
+    bottom: -12px;
+}
+
+.roadmap__events__event:nth-child(even):after {
+    bottom: -4px;
+}
+
+.roadmap__events__event:nth-child(even) .event {
+    bottom: 80px;
+}
+
+.roadmap__events__event:nth-child(1n) .event,
+.roadmap__events__event:nth-child(1n):after,
+.roadmap__events__event:nth-child(1n):before {
+    -webkit-transition-delay: .13s;
+    -o-transition-delay: .13s;
+    transition-delay: .13s
+}
+
+.roadmap__events__event:nth-child(2n) .event,
+.roadmap__events__event:nth-child(2n):after,
+.roadmap__events__event:nth-child(2n):before {
+    -webkit-transition-delay: .26s;
+    -o-transition-delay: .26s;
+    transition-delay: .26s;
+}
+
+.roadmap__events__event:nth-child(3n) .event,
+.roadmap__events__event:nth-child(3n):after,
+.roadmap__events__event:nth-child(3n):before {
+    -webkit-transition-delay: .39s;
+    -o-transition-delay: .39s;
+    transition-delay: .39s;
+}
+
+.roadmap__events__event:nth-child(4n) .event,
+.roadmap__events__event:nth-child(4n):after,
+.roadmap__events__event:nth-child(4n):before {
+    -webkit-transition-delay: .52s;
+    -o-transition-delay: .52s;
+    transition-delay: .52s;
+}
+
+.roadmap__events__event:nth-child(5n) .event,
+.roadmap__events__event:nth-child(5n):after,
+.roadmap__events__event:nth-child(5n):before {
+    -webkit-transition-delay: .65s;
+    -o-transition-delay: .65s;
+    transition-delay: .65s;
+}
+
+.roadmap__events__event:nth-child(6n) .event,
+.roadmap__events__event:nth-child(6n):after,
+.roadmap__events__event:nth-child(6n):before {
+    -webkit-transition-delay: .78s;
+    -o-transition-delay: .78s;
+    transition-delay: .78s;
+}
+
+.roadmap__events__event:nth-child(7n) .event,
+.roadmap__events__event:nth-child(7n):after,
+.roadmap__events__event:nth-child(7n):before {
+    -webkit-transition-delay: .91s;
+    -o-transition-delay: .91s;
+    transition-delay: .91s;
+}
+
+.roadmap__events__event:nth-child(8n) .event,
+.roadmap__events__event:nth-child(8n):after,
+.roadmap__events__event:nth-child(8n):before {
+    -webkit-transition-delay: 1.04s;
+    -o-transition-delay: 1.04s;
+    transition-delay: 1.04s;
+}
+
+.roadmap__events__event:nth-child(9n) .event,
+.roadmap__events__event:nth-child(9n):after,
+.roadmap__events__event:nth-child(9n):before {
+    -webkit-transition-delay: 1.17s;
+    -o-transition-delay: 1.17s;
+    transition-delay: 1.17s;
+}
+
+.roadmap__events__event:nth-child(10n) .event,
+.roadmap__events__event:nth-child(10n):after,
+.roadmap__events__event:nth-child(10n):before {
+    -webkit-transition-delay: 1.3s;
+    -o-transition-delay: 1.3s;
+    transition-delay: 1.3s;
+}
+
+.roadmap__events__event:nth-child(11n) .event,
+.roadmap__events__event:nth-child(11n):after,
+.roadmap__events__event:nth-child(11n):before {
+    -webkit-transition-delay: 1.43s;
+    -o-transition-delay: 1.43s;
+    transition-delay: 1.43s;
+}
+
+.roadmap__events__event:nth-child(12n) .event,
+.roadmap__events__event:nth-child(12n):after,
+.roadmap__events__event:nth-child(12n):before {
+    -webkit-transition-delay: 1.56s;
+    -o-transition-delay: 1.56s;
+    transition-delay: 1.56s;
+}
+
+.roadmap__events__event:nth-child(13n) .event,
+.roadmap__events__event:nth-child(13n):after,
+.roadmap__events__event:nth-child(13n):before {
+    -webkit-transition-delay: 1.69s;
+    -o-transition-delay: 1.69s;
+    transition-delay: 1.69s;
+}
+
+.roadmap__events__event:nth-child(14n) .event,
+.roadmap__events__event:nth-child(14n):after,
+.roadmap__events__event:nth-child(14n):before {
+    -webkit-transition-delay: 1.82s;
+    -o-transition-delay: 1.82s;
+    transition-delay: 1.82s;
+}
+
+.roadmap__events__event:nth-child(15n) .event,
+.roadmap__events__event:nth-child(15n):after,
+.roadmap__events__event:nth-child(15n):before {
+    -webkit-transition-delay: 1.95s;
+    -o-transition-delay: 1.95s;
+    transition-delay: 1.95s;
+}
+
+.roadmap__navigation {
+    margin: 0;
+}
+
+.roadmap__navigation > * {
+    position: absolute;
+    top: 50%;
+    -webkit-transform: translateY(-46%);
+    -ms-transform: translateY(-46%);
+    -o-transform: translateY(-46%);
+    transform: translateY(-46%);
+    z-index: 100;
+    list-style: none;
+}
+
+.roadmap__navigation > * a {
+    display: block;
+    color: #000;
+    line-height: 0;
+}
+
+.roadmap__navigation > * a i {
+    font-size:30px;
+}
+
+.roadmap__navigation > * a:hover {
+    text-decoration: none;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+}
+
+.roadmap__navigation > :first-child {
+    left: 40px;
+}
+
+.roadmap__navigation > :last-child {
+    right: 40px;
+}
+
+.roadmap.roadmap--initialized .roadmap__events:after {
+    width: 100%;
+}
+
+.roadmap.roadmap--initialized .roadmap__events .roadmap__events__event:before {
+    -webkit-transform: scale(1) translateX(-50%);
+    -ms-transform: scale(1) translateX(-50%);
+    -o-transform: scale(1) translateX(-50%);
+    transform: scale(1) translateX(-50%);
+}
+
+.roadmap.roadmap--initialized .roadmap__events .roadmap__events__event:after {
+    height: 62px;
+}
+
+.roadmap.roadmap--initialized .roadmap__events .roadmap__events__event .event {
+    -webkit-transform: scale(1);
+    -ms-transform: scale(1);
+    -o-transform: scale(1);
+    transform: scale(1);
+}
+.event__content {
+    text-transform: uppercase;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+.event__date {
+     font-size: 0.85em;
+}
+.roadmap__events__event .event .event__content small {
+    display: block;
+    color: #888;
+    letter-spacing: 1px;
+}
+@media only screen and (max-width:992px) {
+    .roadmap {
+        margin: 50px auto 0;
+    }
+    .roadmap .roadmap__events {
+        padding: 0;
+        width: 80%;
+        min-height: 400px;
+    }
+    .roadmap .roadmap__events:after {
+        left: 50%;
+        top: 0;
+        width: 4px;
+        height: -webkit-calc(0% - 0px);
+        height: calc(0% - 0px);
+        -webkit-transform: translateX(-50%);
+        -ms-transform: translateX(-50%);
+        -o-transform: translateX(-50%);
+        transform: translateX(-50%)
+    }
+    .roadmap .roadmap__events__event {
+        position: relative;
+        left: auto !important;
+        top: auto;
+        bottom: auto;
+        margin-left: 0;
+        width: auto;
+        height: auto;
+        min-height: 120px;
+    }
+    .roadmap .roadmap__events__event:before {
+        top: -8px;
+        bottom: auto;
+    }
+    .roadmap .roadmap__events__event:after {
+        top: 0;
+        bottom: auto;
+        width: 0;
+        height: 4px !important;
+    }
+    .roadmap .roadmap__events__event .event {
+        top: -15px;
+        bottom: auto;
+        width: 40%;
+    }
+    .roadmap .roadmap__events__event:nth-child(odd):after {
+        -webkit-transform: translateX(-100%);
+        -ms-transform: translateX(-100%);
+        -o-transform: translateX(-100%);
+        transform: translateX(-100%);
+    }
+}
+
+@media only screen and (max-width:992px) and (max-width:600px) {
+    .roadmap .roadmap__events__event .event {
+        width: 50%;
+    }
+    .roadmap .roadmap__events__event:nth-child(odd) .event {
+        margin-left: -10%;
+    }
+    .roadmap .roadmap__events__event:nth-child(even) .event {
+        margin-right: -10%;
+    }
+}
+
+@media only screen and (max-width:992px) {
+    .roadmap .roadmap__events__event:nth-child(even):after {
+        -webkit-transform: translateX(0);
+        -ms-transform: translateX(0);
+        -o-transform: translateX(0);
+        transform: translateX(0);
+    }
+    .roadmap .roadmap__events__event:nth-child(even) .event {
+        right: 0;
+    }
+    .roadmap.roadmap--initialized .roadmap__events:after {
+        width: 4px;
+        height: -webkit-calc(100% - 120px);
+        height: calc(100% - 120px);
+    }
+    .roadmap.roadmap--initialized .roadmap__events .roadmap__events__event:after {
+        width: 48px;
+    }
+    .roadmap.roadmap--initialized .roadmap__events .roadmap__events__event:nth-child(odd):after {
+        -webkit-transform: translateX(-100%);
+        -ms-transform: translateX(-100%);
+        -o-transform: translateX(-100%);
+        transform: translateX(-100%);
+    }
+    .roadmap.roadmap--initialized .roadmap__events .roadmap__events__event:nth-child(even):after {
+        -webkit-transform: translateX(0);
+        -ms-transform: translateX(0);
+        -o-transform: translateX(0);
+        transform: translateX(0);
+    }
+}
+
+@media only screen and (max-width:992px) and (max-width:600px) {
+    .roadmap.roadmap--initialized .roadmap__events .roadmap__events__event:after {
+        width: 32px;
+    }
+}
+<div id="roadmap">
+<h2 id="Roadmap">Roadmap</h2><p></p>
+<div class="row">
+    <div class="col-md-6 col-md-offset-1">
+        <div class="row text-center">
+            <div class="col-md-3">{% capture roadmap-p1 %}{% include roadmap/roadmap-p1.md %}{% endcapture %}{{ roadmap-p1 | markdownify }}</div>
+            <div class="col-md-3">{% capture roadmap-p2 %}{% include roadmap/roadmap-p2.md %}{% endcapture %}{{ roadmap-p2 | markdownify }}</div>
+            <div class="col-md-3">{% capture roadmap-p3 %}{% include roadmap/roadmap-p3.md %}{% endcapture %}{{ roadmap-p3 | markdownify }}</div>
+            <div class="col-md-3">{% capture roadmap-p4 %}{% include roadmap/roadmap-p4.md %}{% endcapture %}{{ roadmap-p4 | markdownify }}</div>
+        </div>
+    </div>
+    <div class="col-md-6 col-md-offset-1">
+        <div class="row text-center">
+            <div class="col-md-3">{% capture roadmap-p5 %}{% include roadmap/roadmap-p5.md %}{% endcapture %}{{ roadmap-p5 | markdownify }}</div>
+            <div class="col-md-3">{% capture roadmap-p6 %}{% include roadmap/roadmap-p6.md %}{% endcapture %}{{ roadmap-p6 | markdownify }}</div>
+            <div class="col-md-3">{% capture roadmap-p7 %}{% include roadmap/roadmap-p7.md %}{% endcapture %}{{ roadmap-p7 | markdownify }}</div>
+            <div class="col-md-3">{% capture roadmap-p8 %}{% include roadmap/roadmap-p8.md %}{% endcapture %}{{ roadmap-p8 | markdownify }}</div>
+        </div>
+    </div>
+</div>
+</div><br>
+{"name":"vendor_bfe42b16a5c4d35aaf20","content":{"./node_modules/_async-validator@1.8.5@async-validator/es/util.js":{"id":0,"buildMeta":{"exportsType":"namespace","providedExports":["warning","format","isEmptyValue","isEmptyObject","asyncMap","complementError","deepMerge"]}},"./node_modules/_async-validator@1.8.5@async-validator/es/rule/index.js":{"id":1,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_vue@2.6.11@vue/dist/vue.runtime.esm.js":{"id":2,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_axios@0.19.2@axios/lib/utils.js":{"id":3,"buildMeta":{"providedExports":true}},"./node_modules/_babel-runtime@6.26.0@babel-runtime/helpers/typeof.js":{"id":4,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/utils/util.js":{"id":5,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/utils/dom.js":{"id":6,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_global.js":{"id":7,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/mixins/emitter.js":{"id":8,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_descriptors.js":{"id":9,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_has.js":{"id":10,"buildMeta":{"providedExports":true}},"./node_modules/_babel-runtime@6.26.0@babel-runtime/helpers/extends.js":{"id":11,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_hide.js":{"id":12,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_object-dp.js":{"id":13,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_to-iobject.js":{"id":14,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_wks.js":{"id":15,"buildMeta":{"providedExports":true}},"./node_modules/_async-validator@1.8.5@async-validator/es/messages.js":{"id":16,"buildMeta":{"exportsType":"namespace","providedExports":["newMessages","messages"]}},"./node_modules/_webpack@4.44.1@webpack/buildin/global.js":{"id":17,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_core.js":{"id":18,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_is-object.js":{"id":19,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_fails.js":{"id":20,"buildMeta":{"providedExports":true}},"./node_modules/_async-validator@1.8.5@async-validator/es/validator/index.js":{"id":21,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_element-ui@2.13.0@element-ui/lib/locale/index.js":{"id":22,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/utils/vue-popper.js":{"id":23,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/utils/merge.js":{"id":24,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/utils/shared.js":{"id":25,"buildMeta":{"providedExports":true}},"./node_modules/_throttle-debounce@1.1.0@throttle-debounce/debounce.js":{"id":26,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_an-object.js":{"id":27,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_property-desc.js":{"id":28,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_object-keys.js":{"id":29,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_library.js":{"id":30,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_uid.js":{"id":31,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_object-pie.js":{"id":32,"buildMeta":{"providedExports":true}},"./node_modules/_async-validator@1.8.5@async-validator/es/rule/required.js":{"id":33,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_async-validator@1.8.5@async-validator/es/validator/type.js":{"id":34,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_element-ui@2.13.0@element-ui/lib/mixins/locale.js":{"id":35,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/utils/scrollbar-width.js":{"id":36,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/input.js":{"id":37,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/utils/resize-event.js":{"id":38,"buildMeta":{"providedExports":true}},"./node_modules/_throttle-debounce@1.1.0@throttle-debounce/throttle.js":{"id":39,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/scrollbar.js":{"id":40,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/mixins/focus.js":{"id":41,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/utils/scroll-into-view.js":{"id":42,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/utils/aria-utils.js":{"id":43,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_export.js":{"id":44,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_to-primitive.js":{"id":45,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_defined.js":{"id":46,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_to-integer.js":{"id":47,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_shared-key.js":{"id":48,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_shared.js":{"id":49,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_enum-bug-keys.js":{"id":50,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_object-gops.js":{"id":51,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_to-object.js":{"id":52,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_iterators.js":{"id":53,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_set-to-string-tag.js":{"id":54,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_wks-ext.js":{"id":55,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_wks-define.js":{"id":56,"buildMeta":{"providedExports":true}},"./node_modules/_process@0.11.10@process/browser.js":{"id":57,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/helpers/bind.js":{"id":58,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/helpers/buildURL.js":{"id":59,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/cancel/isCancel.js":{"id":60,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/defaults.js":{"id":61,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/adapters/xhr.js":{"id":62,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/core/createError.js":{"id":63,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/core/mergeConfig.js":{"id":64,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/cancel/Cancel.js":{"id":65,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/utils/date.js":{"id":66,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/utils/types.js":{"id":67,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/utils/popup/index.js":{"id":68,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/mixins/migrating.js":{"id":69,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/utils/clickoutside.js":{"id":70,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/checkbox.js":{"id":71,"buildMeta":{"providedExports":true}},"./node_modules/_babel-helper-vue-jsx-merge-props@2.0.3@babel-helper-vue-jsx-merge-props/index.js":{"id":72,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/tag.js":{"id":73,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_ie8-dom-define.js":{"id":74,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_dom-create.js":{"id":75,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_object-keys-internal.js":{"id":76,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_iobject.js":{"id":77,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_cof.js":{"id":78,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_iter-define.js":{"id":79,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_redefine.js":{"id":80,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_object-create.js":{"id":81,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_object-gopn.js":{"id":82,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/radio.js":{"id":83,"buildMeta":{"providedExports":true}},"./node_modules/_async-validator@1.8.5@async-validator/es/validator/string.js":{"id":84,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_async-validator@1.8.5@async-validator/es/rule/whitespace.js":{"id":85,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_async-validator@1.8.5@async-validator/es/rule/type.js":{"id":86,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_async-validator@1.8.5@async-validator/es/rule/range.js":{"id":87,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_async-validator@1.8.5@async-validator/es/rule/enum.js":{"id":88,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_async-validator@1.8.5@async-validator/es/rule/pattern.js":{"id":89,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_async-validator@1.8.5@async-validator/es/validator/method.js":{"id":90,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_async-validator@1.8.5@async-validator/es/validator/number.js":{"id":91,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_async-validator@1.8.5@async-validator/es/validator/boolean.js":{"id":92,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_async-validator@1.8.5@async-validator/es/validator/regexp.js":{"id":93,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_async-validator@1.8.5@async-validator/es/validator/integer.js":{"id":94,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_async-validator@1.8.5@async-validator/es/validator/float.js":{"id":95,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_async-validator@1.8.5@async-validator/es/validator/array.js":{"id":96,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_async-validator@1.8.5@async-validator/es/validator/object.js":{"id":97,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_async-validator@1.8.5@async-validator/es/validator/enum.js":{"id":98,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_async-validator@1.8.5@async-validator/es/validator/pattern.js":{"id":99,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_async-validator@1.8.5@async-validator/es/validator/date.js":{"id":100,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_async-validator@1.8.5@async-validator/es/validator/required.js":{"id":101,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_timers-browserify@2.0.11@timers-browserify/main.js":{"id":103,"buildMeta":{"providedExports":true}},"./node_modules/_setimmediate@1.0.5@setimmediate/setImmediate.js":{"id":104,"buildMeta":{"providedExports":true}},"./node_modules/_vue-router@3.1.6@vue-router/dist/vue-router.esm.js":{"id":105,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_vuex@3.1.3@vuex/dist/vuex.esm.js":{"id":106,"buildMeta":{"exportsType":"namespace","providedExports":["default","Store","install","mapState","mapMutations","mapGetters","mapActions","createNamespacedHelpers"]}},"./node_modules/_axios@0.19.2@axios/index.js":{"id":107,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/axios.js":{"id":108,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/core/Axios.js":{"id":109,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/core/InterceptorManager.js":{"id":110,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/core/dispatchRequest.js":{"id":111,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/core/transformData.js":{"id":112,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/helpers/normalizeHeaderName.js":{"id":113,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/core/settle.js":{"id":114,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/core/enhanceError.js":{"id":115,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/core/buildFullPath.js":{"id":116,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/helpers/isAbsoluteURL.js":{"id":117,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/helpers/combineURLs.js":{"id":118,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/helpers/parseHeaders.js":{"id":119,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/helpers/isURLSameOrigin.js":{"id":120,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/helpers/cookies.js":{"id":121,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/cancel/CancelToken.js":{"id":122,"buildMeta":{"providedExports":true}},"./node_modules/_axios@0.19.2@axios/lib/helpers/spread.js":{"id":123,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/element-ui.common.js":{"id":124,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/utils/date-util.js":{"id":125,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/locale/lang/zh-CN.js":{"id":126,"buildMeta":{"providedExports":true}},"./node_modules/_deepmerge@1.5.2@deepmerge/dist/cjs.js":{"id":127,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/locale/format.js":{"id":128,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/utils/popup/popup-manager.js":{"id":129,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/utils/popper.js":{"id":130,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/button.js":{"id":131,"buildMeta":{"providedExports":true}},"./node_modules/_resize-observer-polyfill@1.5.1@resize-observer-polyfill/dist/ResizeObserver.es.js":{"id":132,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_element-ui@2.13.0@element-ui/lib/transitions/collapse-transition.js":{"id":133,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/utils/vdom.js":{"id":134,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/tooltip.js":{"id":135,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/button-group.js":{"id":136,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/checkbox-group.js":{"id":137,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/utils/after-leave.js":{"id":138,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/progress.js":{"id":139,"buildMeta":{"providedExports":true}},"./node_modules/_throttle-debounce@1.1.0@throttle-debounce/index.js":{"id":140,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/select.js":{"id":141,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/option.js":{"id":142,"buildMeta":{"providedExports":true}},"./node_modules/_normalize-wheel@1.0.1@normalize-wheel/index.js":{"id":143,"buildMeta":{"providedExports":true}},"./node_modules/_normalize-wheel@1.0.1@normalize-wheel/src/normalizeWheel.js":{"id":144,"buildMeta":{"providedExports":true}},"./node_modules/_normalize-wheel@1.0.1@normalize-wheel/src/UserAgent_DEPRECATED.js":{"id":145,"buildMeta":{"providedExports":true}},"./node_modules/_normalize-wheel@1.0.1@normalize-wheel/src/isEventSupported.js":{"id":146,"buildMeta":{"providedExports":true}},"./node_modules/_normalize-wheel@1.0.1@normalize-wheel/src/ExecutionEnvironment.js":{"id":147,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/utils/aria-dialog.js":{"id":148,"buildMeta":{"providedExports":true}},"./node_modules/_async-validator@1.8.5@async-validator/es/index.js":{"id":149,"buildMeta":{"exportsType":"namespace","providedExports":["default"]}},"./node_modules/_babel-runtime@6.26.0@babel-runtime/core-js/object/assign.js":{"id":150,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/fn/object/assign.js":{"id":151,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/es6.object.assign.js":{"id":152,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_ctx.js":{"id":153,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_a-function.js":{"id":154,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_object-assign.js":{"id":155,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_array-includes.js":{"id":156,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_to-length.js":{"id":157,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_to-absolute-index.js":{"id":158,"buildMeta":{"providedExports":true}},"./node_modules/_babel-runtime@6.26.0@babel-runtime/core-js/symbol/iterator.js":{"id":159,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/fn/symbol/iterator.js":{"id":160,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/es6.string.iterator.js":{"id":161,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_string-at.js":{"id":162,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_iter-create.js":{"id":163,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_object-dps.js":{"id":164,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_html.js":{"id":165,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_object-gpo.js":{"id":166,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/web.dom.iterable.js":{"id":167,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/es6.array.iterator.js":{"id":168,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_add-to-unscopables.js":{"id":169,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_iter-step.js":{"id":170,"buildMeta":{"providedExports":true}},"./node_modules/_babel-runtime@6.26.0@babel-runtime/core-js/symbol.js":{"id":171,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/fn/symbol/index.js":{"id":172,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/es6.symbol.js":{"id":173,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_meta.js":{"id":174,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_enum-keys.js":{"id":175,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_is-array.js":{"id":176,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_object-gopn-ext.js":{"id":177,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/_object-gopd.js":{"id":178,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/es6.object.to-string.js":{"id":179,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/es7.symbol.async-iterator.js":{"id":180,"buildMeta":{"providedExports":true}},"./node_modules/_core-js@2.6.11@core-js/library/modules/es7.symbol.observable.js":{"id":181,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/input-number.js":{"id":182,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/cascader-panel.js":{"id":183,"buildMeta":{"providedExports":true}},"./node_modules/_element-ui@2.13.0@element-ui/lib/popover.js":{"id":184,"buildMeta":{"providedExports":true}}}}
+{"id":"phS/","dependencies":[{"name":"/home/nick/github/ethtoolbox/package.json","includedInParent":true,"mtime":1554998092188},{"name":"/home/nick/github/ethtoolbox/node_modules/axios/package.json","includedInParent":true,"mtime":1554906694122},{"name":"./../utils","loc":{"line":3,"column":20},"parent":"/home/nick/github/ethtoolbox/node_modules/axios/lib/helpers/buildURL.js","resolved":"/home/nick/github/ethtoolbox/node_modules/axios/lib/utils.js"}],"generated":{"js":"\"use strict\";var e=require(\"./../utils\");function r(e){return encodeURIComponent(e).replace(/%40/gi,\"@\").replace(/%3A/gi,\":\").replace(/%24/g,\"$\").replace(/%2C/gi,\",\").replace(/%20/g,\"+\").replace(/%5B/gi,\"[\").replace(/%5D/gi,\"]\")}module.exports=function(i,n,t){if(!n)return i;var a;if(t)a=t(n);else if(e.isURLSearchParams(n))a=n.toString();else{var c=[];e.forEach(n,function(i,n){null!=i&&(e.isArray(i)?n+=\"[]\":i=[i],e.forEach(i,function(i){e.isDate(i)?i=i.toISOString():e.isObject(i)&&(i=JSON.stringify(i)),c.push(r(n)+\"=\"+r(i))}))}),a=c.join(\"&\")}return a&&(i+=(-1===i.indexOf(\"?\")?\"?\":\"&\")+a),i};","map":{"mappings":[{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":1,"column":0},"generated":{"line":1,"column":0}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":3,"column":0},"generated":{"line":1,"column":13}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":3,"column":0},"generated":{"line":1,"column":17}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":3,"column":0},"generated":{"line":1,"column":19}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":3,"column":0},"generated":{"line":1,"column":27}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":5,"column":0},"generated":{"line":1,"column":41}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":5,"column":0},"generated":{"line":1,"column":50}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":5,"column":0},"generated":{"line":1,"column":52}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":6,"column":0},"generated":{"line":1,"column":55}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":6,"column":0},"generated":{"line":1,"column":62}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":6,"column":0},"generated":{"line":1,"column":81}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":7,"column":0},"generated":{"line":1,"column":84}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":7,"column":0},"generated":{"line":1,"column":92}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":7,"column":0},"generated":{"line":1,"column":100}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":8,"column":0},"generated":{"line":1,"column":105}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":8,"column":0},"generated":{"line":1,"column":113}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":8,"column":0},"generated":{"line":1,"column":121}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":9,"column":0},"generated":{"line":1,"column":126}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":9,"column":0},"generated":{"line":1,"column":134}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":9,"column":0},"generated":{"line":1,"column":141}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":10,"column":0},"generated":{"line":1,"column":146}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":10,"column":0},"generated":{"line":1,"column":154}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":10,"column":0},"generated":{"line":1,"column":162}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":11,"column":0},"generated":{"line":1,"column":167}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":11,"column":0},"generated":{"line":1,"column":175}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":11,"column":0},"generated":{"line":1,"column":182}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":12,"column":0},"generated":{"line":1,"column":187}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":12,"column":0},"generated":{"line":1,"column":195}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":12,"column":0},"generated":{"line":1,"column":203}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":13,"column":0},"generated":{"line":1,"column":208}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":13,"column":0},"generated":{"line":1,"column":216}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":13,"column":0},"generated":{"line":1,"column":224}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":23,"column":0},"generated":{"line":1,"column":229}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":23,"column":0},"generated":{"line":1,"column":236}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":23,"column":0},"generated":{"line":1,"column":244}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":23,"column":0},"generated":{"line":1,"column":253}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":23,"column":0},"generated":{"line":1,"column":255}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":23,"column":0},"generated":{"line":1,"column":257}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":25,"column":0},"generated":{"line":1,"column":260}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":25,"column":0},"generated":{"line":1,"column":264}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":26,"column":0},"generated":{"line":1,"column":266}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":26,"column":0},"generated":{"line":1,"column":273}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":29,"column":0},"generated":{"line":1,"column":275}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":29,"column":0},"generated":{"line":1,"column":279}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":30,"column":0},"generated":{"line":1,"column":281}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":30,"column":0},"generated":{"line":1,"column":284}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":31,"column":0},"generated":{"line":1,"column":286}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":31,"column":0},"generated":{"line":1,"column":288}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":31,"column":0},"generated":{"line":1,"column":290}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":32,"column":0},"generated":{"line":1,"column":298}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":32,"column":0},"generated":{"line":1,"column":301}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":32,"column":0},"generated":{"line":1,"column":303}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":32,"column":0},"generated":{"line":1,"column":321}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":33,"column":0},"generated":{"line":1,"column":324}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":33,"column":0},"generated":{"line":1,"column":326}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":33,"column":0},"generated":{"line":1,"column":328}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":34,"column":0},"generated":{"line":1,"column":343}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":35,"column":0},"generated":{"line":1,"column":344}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":35,"column":0},"generated":{"line":1,"column":348}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":35,"column":0},"generated":{"line":1,"column":350}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":37,"column":0},"generated":{"line":1,"column":353}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":37,"column":0},"generated":{"line":1,"column":355}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":37,"column":0},"generated":{"line":1,"column":363}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":37,"column":0},"generated":{"line":1,"column":365}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":37,"column":0},"generated":{"line":1,"column":374}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":37,"column":0},"generated":{"line":1,"column":376}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":38,"column":0},"generated":{"line":1,"column":379}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":38,"column":0},"generated":{"line":1,"column":385}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":42,"column":0},"generated":{"line":1,"column":389}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":42,"column":0},"generated":{"line":1,"column":391}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":42,"column":0},"generated":{"line":1,"column":399}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":43,"column":0},"generated":{"line":1,"column":402}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":43,"column":0},"generated":{"line":1,"column":405}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":45,"column":0},"generated":{"line":1,"column":410}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":45,"column":0},"generated":{"line":1,"column":412}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":45,"column":0},"generated":{"line":1,"column":413}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":48,"column":0},"generated":{"line":1,"column":416}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":48,"column":0},"generated":{"line":1,"column":418}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":48,"column":0},"generated":{"line":1,"column":426}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":48,"column":0},"generated":{"line":1,"column":428}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":48,"column":0},"generated":{"line":1,"column":437}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":49,"column":0},"generated":{"line":1,"column":440}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":49,"column":0},"generated":{"line":1,"column":442}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":49,"column":0},"generated":{"line":1,"column":449}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":50,"column":0},"generated":{"line":1,"column":452}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":50,"column":0},"generated":{"line":1,"column":454}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":50,"column":0},"generated":{"line":1,"column":456}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":51,"column":0},"generated":{"line":1,"column":470}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":51,"column":0},"generated":{"line":1,"column":472}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":51,"column":0},"generated":{"line":1,"column":481}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":52,"column":0},"generated":{"line":1,"column":486}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":52,"column":0},"generated":{"line":1,"column":488}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":52,"column":0},"generated":{"line":1,"column":493}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":52,"column":0},"generated":{"line":1,"column":503}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":54,"column":0},"generated":{"line":1,"column":507}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":54,"column":0},"generated":{"line":1,"column":509}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":54,"column":0},"generated":{"line":1,"column":514}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":54,"column":0},"generated":{"line":1,"column":516}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":54,"column":0},"generated":{"line":1,"column":519}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":54,"column":0},"generated":{"line":1,"column":523}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":54,"column":0},"generated":{"line":1,"column":525}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":58,"column":0},"generated":{"line":1,"column":534}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":58,"column":0},"generated":{"line":1,"column":536}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":58,"column":0},"generated":{"line":1,"column":538}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":58,"column":0},"generated":{"line":1,"column":543}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":65,"column":0},"generated":{"line":1,"column":548}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":61,"column":0},"generated":{"line":1,"column":555}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":62,"column":0},"generated":{"line":1,"column":559}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":62,"column":0},"generated":{"line":1,"column":564}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":62,"column":0},"generated":{"line":1,"column":568}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":62,"column":0},"generated":{"line":1,"column":570}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":62,"column":0},"generated":{"line":1,"column":578}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":62,"column":0},"generated":{"line":1,"column":583}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":62,"column":0},"generated":{"line":1,"column":587}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":62,"column":0},"generated":{"line":1,"column":592}},{"source":"node_modules/axios/lib/helpers/buildURL.js","original":{"line":65,"column":0},"generated":{"line":1,"column":595}}],"sources":{"node_modules/axios/lib/helpers/buildURL.js":"'use strict';\n\nvar utils = require('./../utils');\n\nfunction encode(val) {\n  return encodeURIComponent(val).\n    replace(/%40/gi, '@').\n    replace(/%3A/gi, ':').\n    replace(/%24/g, '$').\n    replace(/%2C/gi, ',').\n    replace(/%20/g, '+').\n    replace(/%5B/gi, '[').\n    replace(/%5D/gi, ']');\n}\n\n/**\n * Build a URL by appending params to the end\n *\n * @param {string} url The base of the url (e.g., http://www.google.com)\n * @param {object} [params] The params to be appended\n * @returns {string} The formatted url\n */\nmodule.exports = function buildURL(url, params, paramsSerializer) {\n  /*eslint no-param-reassign:0*/\n  if (!params) {\n    return url;\n  }\n\n  var serializedParams;\n  if (paramsSerializer) {\n    serializedParams = paramsSerializer(params);\n  } else if (utils.isURLSearchParams(params)) {\n    serializedParams = params.toString();\n  } else {\n    var parts = [];\n\n    utils.forEach(params, function serialize(val, key) {\n      if (val === null || typeof val === 'undefined') {\n        return;\n      }\n\n      if (utils.isArray(val)) {\n        key = key + '[]';\n      } else {\n        val = [val];\n      }\n\n      utils.forEach(val, function parseValue(v) {\n        if (utils.isDate(v)) {\n          v = v.toISOString();\n        } else if (utils.isObject(v)) {\n          v = JSON.stringify(v);\n        }\n        parts.push(encode(key) + '=' + encode(v));\n      });\n    });\n\n    serializedParams = parts.join('&');\n  }\n\n  if (serializedParams) {\n    url += (url.indexOf('?') === -1 ? '?' : '&') + serializedParams;\n  }\n\n  return url;\n};\n"},"lineCount":null}},"hash":"795c27d8bc70e836ef3d3767b43fb4ca","cacheData":{"env":{}}}
+<?php
+
+namespace Drupal\node;
+
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityViewBuilder;
+use Drupal\node\Entity\Node;
+
+/**
+ * View builder handler for nodes.
+ */
+class NodeViewBuilder extends EntityViewBuilder {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildComponents(array &$build, array $entities, array $displays, $view_mode) {
+    /** @var \Drupal\node\NodeInterface[] $entities */
+    if (empty($entities)) {
+      return;
+    }
+
+    parent::buildComponents($build, $entities, $displays, $view_mode);
+
+    foreach ($entities as $id => $entity) {
+      $bundle = $entity->bundle();
+      $display = $displays[$bundle];
+
+      if ($display->getComponent('links')) {
+        $build[$id]['links'] = [
+          '#lazy_builder' => [
+            get_called_class() . '::renderLinks', [
+              $entity->id(),
+              $view_mode,
+              $entity->language()->getId(),
+              !empty($entity->in_preview),
+            ],
+          ],
+        ];
+      }
+
+      // Add Language field text element to node render array.
+      if ($display->getComponent('langcode')) {
+        $build[$id]['langcode'] = [
+          '#type' => 'item',
+          '#title' => t('Language'),
+          '#markup' => $entity->language()->getName(),
+          '#prefix' => '<div id="field-language-display">',
+          '#suffix' => '</div>'
+        ];
+      }
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getBuildDefaults(EntityInterface $entity, $view_mode) {
+    $defaults = parent::getBuildDefaults($entity, $view_mode);
+
+    // Don't cache nodes that are in 'preview' mode.
+    if (isset($defaults['#cache']) && isset($entity->in_preview)) {
+      unset($defaults['#cache']);
+    }
+
+    return $defaults;
+  }
+
+  /**
+   * #lazy_builder callback; builds a node's links.
+   *
+   * @param string $node_entity_id
+   *   The node entity ID.
+   * @param string $view_mode
+   *   The view mode in which the node entity is being viewed.
+   * @param string $langcode
+   *   The language in which the node entity is being viewed.
+   * @param bool $is_in_preview
+   *   Whether the node is currently being previewed.
+   *
+   * @return array
+   *   A renderable array representing the node links.
+   */
+  public static function renderLinks($node_entity_id, $view_mode, $langcode, $is_in_preview) {
+    $links = [
+      '#theme' => 'links__node',
+      '#pre_render' => ['drupal_pre_render_links'],
+      '#attributes' => ['class' => ['links', 'inline']],
+    ];
+
+    if (!$is_in_preview) {
+      $entity = Node::load($node_entity_id)->getTranslation($langcode);
+      $links['node'] = static::buildLinks($entity, $view_mode);
+
+      // Allow other modules to alter the node links.
+      $hook_context = [
+        'view_mode' => $view_mode,
+        'langcode' => $langcode,
+      ];
+      \Drupal::moduleHandler()->alter('node_links', $links, $entity, $hook_context);
+    }
+    return $links;
+  }
+
+  /**
+   * Build the default links (Read more) for a node.
+   *
+   * @param \Drupal\node\NodeInterface $entity
+   *   The node object.
+   * @param string $view_mode
+   *   A view mode identifier.
+   *
+   * @return array
+   *   An array that can be processed by drupal_pre_render_links().
+   */
+  protected static function buildLinks(NodeInterface $entity, $view_mode) {
+    $links = [];
+
+    // Always display a read more link on teasers because we have no way
+    // to know when a teaser view is different than a full view.
+    if ($view_mode == 'teaser') {
+      $node_title_stripped = strip_tags($entity->label());
+      $links['node-readmore'] = [
+        'title' => t('Read more<span class="visually-hidden"> about @title</span>', [
+          '@title' => $node_title_stripped,
+        ]),
+        'url' => $entity->urlInfo(),
+        'language' => $entity->language(),
+        'attributes' => [
+          'rel' => 'tag',
+          'title' => $node_title_stripped,
+        ],
+      ];
+    }
+
+    return [
+      '#theme' => 'links__node__node',
+      '#links' => $links,
+      '#attributes' => ['class' => ['links', 'inline']],
+    ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function alterBuild(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
+    /** @var \Drupal\node\NodeInterface $entity */
+    parent::alterBuild($build, $entity, $display, $view_mode);
+    if ($entity->id()) {
+      if ($entity->isDefaultRevision()) {
+        $build['#contextual_links']['node'] = [
+          'route_parameters' => ['node' => $entity->id()],
+          'metadata' => ['changed' => $entity->getChangedTime()],
+        ];
+      }
+      else {
+        $build['#contextual_links']['node_revision'] = [
+          'route_parameters' => [
+            'node' => $entity->id(),
+            'node_revision' => $entity->getRevisionId(),
+          ],
+          'metadata' => ['changed' => $entity->getChangedTime()],
+        ];
+      }
+    }
+  }
+
+}
+<?php
+
+namespace Stack;
+
+use Symfony\Component\HttpKernel\HttpKernelInterface;
+
+class Builder
+{
+    private $specs;
+
+    public function __construct()
+    {
+        $this->specs = new \SplStack();
+    }
+
+    public function unshift(/*$kernelClass, $args...*/)
+    {
+        if (func_num_args() === 0) {
+            throw new \InvalidArgumentException("Missing argument(s) when calling unshift");
+        }
+
+        $spec = func_get_args();
+        $this->specs->unshift($spec);
+
+        return $this;
+    }
+
+    public function push(/*$kernelClass, $args...*/)
+    {
+        if (func_num_args() === 0) {
+            throw new \InvalidArgumentException("Missing argument(s) when calling push");
+        }
+
+        $spec = func_get_args();
+        $this->specs->push($spec);
+
+        return $this;
+    }
+
+    public function resolve(HttpKernelInterface $app)
+    {
+        $middlewares = array($app);
+
+        foreach ($this->specs as $spec) {
+            $args = $spec;
+            $firstArg = array_shift($args);
+
+            if (is_callable($firstArg)) {
+                $app = $firstArg($app);
+            } else {
+                $kernelClass = $firstArg;
+                array_unshift($args, $app);
+
+                $reflection = new \ReflectionClass($kernelClass);
+                $app = $reflection->newInstanceArgs($args);
+            }
+
+            array_unshift($middlewares, $app);
+        }
+
+        return new StackedHttpKernel($app, $middlewares);
+    }
+}
+<?php
+
+namespace Drupal\Tests\taxonomy\Functional;
+
+use Drupal\Component\Utility\Unicode;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
+
+/**
+ * Tests the hook implementations that maintain the taxonomy index.
+ *
+ * @group taxonomy
+ */
+class TermIndexTest extends TaxonomyTestBase {
+
+  /**
+   * Modules to enable.
+   *
+   * @var array
+   */
+  public static $modules = ['views'];
+
+  /**
+   * Vocabulary for testing.
+   *
+   * @var \Drupal\taxonomy\VocabularyInterface
+   */
+  protected $vocabulary;
+
+  /**
+   * Name of the taxonomy term reference field.
+   *
+   * @var string
+   */
+  protected $fieldName1;
+
+  /**
+   * Name of the taxonomy term reference field.
+   *
+   * @var string
+   */
+  protected $fieldName2;
+
+  protected function setUp() {
+    parent::setUp();
+
+    // Create an administrative user.
+    $this->drupalLogin($this->drupalCreateUser(['administer taxonomy', 'bypass node access']));
+
+    // Create a vocabulary and add two term reference fields to article nodes.
+    $this->vocabulary = $this->createVocabulary();
+
+    $this->fieldName1 = Unicode::strtolower($this->randomMachineName());
+    $handler_settings = [
+      'target_bundles' => [
+        $this->vocabulary->id() => $this->vocabulary->id(),
+       ],
+      'auto_create' => TRUE,
+    ];
+    $this->createEntityReferenceField('node', 'article', $this->fieldName1, NULL, 'taxonomy_term', 'default', $handler_settings, FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED);
+
+    entity_get_form_display('node', 'article', 'default')
+      ->setComponent($this->fieldName1, [
+        'type' => 'options_select',
+      ])
+      ->save();
+    entity_get_display('node', 'article', 'default')
+      ->setComponent($this->fieldName1, [
+        'type' => 'entity_reference_label',
+      ])
+      ->save();
+
+    $this->fieldName2 = Unicode::strtolower($this->randomMachineName());
+    $this->createEntityReferenceField('node', 'article', $this->fieldName2, NULL, 'taxonomy_term', 'default', $handler_settings, FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED);
+
+    entity_get_form_display('node', 'article', 'default')
+      ->setComponent($this->fieldName2, [
+        'type' => 'options_select',
+      ])
+      ->save();
+    entity_get_display('node', 'article', 'default')
+      ->setComponent($this->fieldName2, [
+        'type' => 'entity_reference_label',
+      ])
+      ->save();
+  }
+
+  /**
+   * Tests that the taxonomy index is maintained properly.
+   */
+  public function testTaxonomyIndex() {
+    $node_storage = $this->container->get('entity.manager')->getStorage('node');
+    // Create terms in the vocabulary.
+    $term_1 = $this->createTerm($this->vocabulary);
+    $term_2 = $this->createTerm($this->vocabulary);
+
+    // Post an article.
+    $edit = [];
+    $edit['title[0][value]'] = $this->randomMachineName();
+    $edit['body[0][value]'] = $this->randomMachineName();
+    $edit["{$this->fieldName1}[]"] = $term_1->id();
+    $edit["{$this->fieldName2}[]"] = $term_1->id();
+    $this->drupalPostForm('node/add/article', $edit, t('Save'));
+
+    // Check that the term is indexed, and only once.
+    $node = $this->drupalGetNodeByTitle($edit['title[0][value]']);
+    $index_count = db_query('SELECT COUNT(*) FROM {taxonomy_index} WHERE nid = :nid AND tid = :tid', [
+      ':nid' => $node->id(),
+      ':tid' => $term_1->id(),
+    ])->fetchField();
+    $this->assertEqual(1, $index_count, 'Term 1 is indexed once.');
+
+    // Update the article to change one term.
+    $edit["{$this->fieldName1}[]"] = $term_2->id();
+    $this->drupalPostForm('node/' . $node->id() . '/edit', $edit, t('Save'));
+
+    // Check that both terms are indexed.
+    $index_count = db_query('SELECT COUNT(*) FROM {taxonomy_index} WHERE nid = :nid AND tid = :tid', [
+      ':nid' => $node->id(),
+      ':tid' => $term_1->id(),
+    ])->fetchField();
+    $this->assertEqual(1, $index_count, 'Term 1 is indexed.');
+    $index_count = db_query('SELECT COUNT(*) FROM {taxonomy_index} WHERE nid = :nid AND tid = :tid', [
+      ':nid' => $node->id(),
+      ':tid' => $term_2->id(),
+    ])->fetchField();
+    $this->assertEqual(1, $index_count, 'Term 2 is indexed.');
+
+    // Update the article to change another term.
+    $edit["{$this->fieldName2}[]"] = $term_2->id();
+    $this->drupalPostForm('node/' . $node->id() . '/edit', $edit, t('Save'));
+
+    // Check that only one term is indexed.
+    $index_count = db_query('SELECT COUNT(*) FROM {taxonomy_index} WHERE nid = :nid AND tid = :tid', [
+      ':nid' => $node->id(),
+      ':tid' => $term_1->id(),
+    ])->fetchField();
+    $this->assertEqual(0, $index_count, 'Term 1 is not indexed.');
+    $index_count = db_query('SELECT COUNT(*) FROM {taxonomy_index} WHERE nid = :nid AND tid = :tid', [
+      ':nid' => $node->id(),
+      ':tid' => $term_2->id(),
+    ])->fetchField();
+    $this->assertEqual(1, $index_count, 'Term 2 is indexed once.');
+
+    // Redo the above tests without interface.
+    $node_storage->resetCache([$node->id()]);
+    $node = $node_storage->load($node->id());
+    $node->title = $this->randomMachineName();
+
+    // Update the article with no term changed.
+    $node->save();
+
+    // Check that the index was not changed.
+    $index_count = db_query('SELECT COUNT(*) FROM {taxonomy_index} WHERE nid = :nid AND tid = :tid', [
+      ':nid' => $node->id(),
+      ':tid' => $term_1->id(),
+    ])->fetchField();
+    $this->assertEqual(0, $index_count, 'Term 1 is not indexed.');
+    $index_count = db_query('SELECT COUNT(*) FROM {taxonomy_index} WHERE nid = :nid AND tid = :tid', [
+      ':nid' => $node->id(),
+      ':tid' => $term_2->id(),
+    ])->fetchField();
+    $this->assertEqual(1, $index_count, 'Term 2 is indexed once.');
+
+    // Update the article to change one term.
+    $node->{$this->fieldName1} = [['target_id' => $term_1->id()]];
+    $node->save();
+
+    // Check that both terms are indexed.
+    $index_count = db_query('SELECT COUNT(*) FROM {taxonomy_index} WHERE nid = :nid AND tid = :tid', [
+      ':nid' => $node->id(),
+      ':tid' => $term_1->id(),
+    ])->fetchField();
+    $this->assertEqual(1, $index_count, 'Term 1 is indexed.');
+    $index_count = db_query('SELECT COUNT(*) FROM {taxonomy_index} WHERE nid = :nid AND tid = :tid', [
+      ':nid' => $node->id(),
+      ':tid' => $term_2->id(),
+    ])->fetchField();
+    $this->assertEqual(1, $index_count, 'Term 2 is indexed.');
+
+    // Update the article to change another term.
+    $node->{$this->fieldName2} = [['target_id' => $term_1->id()]];
+    $node->save();
+
+    // Check that only one term is indexed.
+    $index_count = db_query('SELECT COUNT(*) FROM {taxonomy_index} WHERE nid = :nid AND tid = :tid', [
+      ':nid' => $node->id(),
+      ':tid' => $term_1->id(),
+    ])->fetchField();
+    $this->assertEqual(1, $index_count, 'Term 1 is indexed once.');
+    $index_count = db_query('SELECT COUNT(*) FROM {taxonomy_index} WHERE nid = :nid AND tid = :tid', [
+      ':nid' => $node->id(),
+      ':tid' => $term_2->id(),
+    ])->fetchField();
+    $this->assertEqual(0, $index_count, 'Term 2 is not indexed.');
+  }
+
+  /**
+   * Tests that there is a link to the parent term on the child term page.
+   */
+  public function testTaxonomyTermHierarchyBreadcrumbs() {
+    // Create two taxonomy terms and set term2 as the parent of term1.
+    $term1 = $this->createTerm($this->vocabulary);
+    $term2 = $this->createTerm($this->vocabulary);
+    $term1->parent = [$term2->id()];
+    $term1->save();
+
+    // Verify that the page breadcrumbs include a link to the parent term.
+    $this->drupalGet('taxonomy/term/' . $term1->id());
+    // Breadcrumbs are not rendered with a language, prevent the term
+    // language from being added to the options.
+    $this->assertRaw(\Drupal::l($term2->getName(), $term2->urlInfo('canonical', ['language' => NULL])), 'Parent term link is displayed when viewing the node.');
+  }
+
+}
+}
