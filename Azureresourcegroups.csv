@@ -1,0 +1,5 @@
+SEP=,
+NAME,SUBSCRIPTION,LOCATION,
+"agenttoolupgrade-rg","Free Trial","East US 2"
+"DefaultResourceGroup-CUS","Free Trial","Central US"
+"DefaultResourceGroup-EUS2","Free Trial","East US 2"

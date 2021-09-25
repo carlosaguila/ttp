@@ -1,0 +1,209 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/azure/functions-action
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy Node.js project to Azure Function App - AtlasICE
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
+  NODE_VERSION: '14.x' # set this to the node version to use (supports 8.x, 10.x, 12.x)
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+    steps:
+    - name: 'Checkout GitHub Action'
+      uses: actions/checkout@v2
+
+    - name: Setup Node ${{ env.NODE_VERSION }} Environment
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: 'Resolve Project Dependencies Using Npm'
+      shell: pwsh
+      run: |
+      
+    - name: Azure DevOps NPM
+  # You may pin to the exact commit or the version.
+  # uses: ponicode/azure-devops-npm-action@4053172f755545f9635d2e083514c83fb2e41a95
+  uses: ponicode/azure-devops-npm-action@1.0.0
+  with:
+    # Your Azure organisation
+    organisation: 
+    # Your Azure project
+    project: 
+    # Your Azure registry
+    registry: 
+    # Your Azure user
+    user: 
+    # Your Azure password
+    password: 
+    # Your Azure email
+    email: 
+    # Your package scope
+    scope: # optional
+    
+    - name: Synapse workspace deployment
+  uses: Azure/Synapse-workspace-deployment@v1.0
+  with:
+    # Provide the Synapse workspace name where you want to deploy the artifacts.
+    TargetWorkspaceName: 
+    # Specify the path to the workspace artifacts template.
+    TemplateFile: 
+    # Specify the path to the template parameter file.
+    ParametersFile: 
+    # Specify deployment parameter values.
+    OverrideArmParameters: # optional, default is 
+    # Provide the type of cloud environment. Valid values are: Azure Public, Azure China, Azure US Government, Azure Germany
+    Environment: 
+    # Provide the resource group of the target Synapse workspace.
+    resourceGroup: 
+    # Provide client id of service principal.
+    clientId: # optional
+    # Provide client secret of the service principal.
+    clientSecret: # optional
+    # Provide subscription id.
+    subscriptionId: 
+    # Provide tenant id.
+    tenantId: # optional
+    # Delete the artifacts which are in the workspace but not in the template.
+    DeleteArtifactsNotInTemplate: # optional
+    # Use managed identity to generate the bearer token
+    managedIdentity: # optional
+    
+    - name: Azure WebApp
+  uses: Azure/webapps-deploy@v2
+  with:
+    # Name of the Azure Web App
+    app-name: 
+    # Applies to Web Apps(Windows and Linux) and Web App Containers(linux). Multi container scenario not supported. Publish profile (*.publishsettings) file contents with Web Deploy secrets
+    publish-profile: # optional
+    # Enter an existing Slot other than the Production slot
+    slot-name: # optional, default is production
+    # Applies to Web App only: Path to package or folder. *.zip, *.war, *.jar or a folder to deploy
+    package: # optional, default is .
+    # Applies to Web App Containers only: Specify the fully qualified container image(s) name. For example, 'myregistry.azurecr.io/nginx:latest' or 'python:3.7.2-alpine/'. For multi-container scenario multiple container image names can be provided (multi-line separated)
+    images: 
+    # Applies to Web App Containers only: Path of the Docker-Compose file. Should be a fully qualified path or relative to the default working directory. Required for multi-container scenario
+    configuration-file: # optional
+    # Enter the start up command. For ex. dotnet run or dotnet run
+    startup-command: # optional
+    
+    - name: Azure SQL Deploy
+  uses: Azure/sql-action@v1
+  with:
+    # Name of the Azure SQL Server name, like Fabrikam.database.windows.net.
+    server-name: 
+    # The connection string, including authentication information, for the Azure SQL Server database.
+    connection-string: 
+    # Path to DACPAC file to deploy
+    dacpac-package: # optional
+    # Path to SQL script file to deploy
+    sql-file: # optional
+    # In case DACPAC option is selected, additional SqlPackage.exe arguments that will be applied. When SQL query option is selected, additional sqlcmd.exe arguments will be applied.
+    arguments: # optional
+    
+    - name: Azure Pipelines Action
+  uses: Azure/pipelines@v1
+  with:
+    # Fullyqualified URL to the Azure DevOps organization along with project name(eg, https://dev.azure.com/organization/project-name or https://server.example.com:8080/tfs/DefaultCollection/project-name)
+    azure-devops-project-url: 
+    # Name of the Azure Pipline to be triggered
+    azure-pipeline-name: 
+    # Paste personal access token of the user as value of secret variable:AZURE_DEVOPS_TOKEN
+    azure-devops-token: 
+    
+    - name: Azure CLI Action
+  uses: Azure/cli@1.0.4
+  with:
+    # Specify the script here
+    inlineScript: 
+    # Azure CLI version to be used to execute the script. If not provided, latest version is used
+    azcliversion: # optional, default is latest
+    
+    - name: Azure Functions Action
+  uses: Azure/functions-action@v1.4.4
+  with:
+    # Name of the Azure Function App
+    app-name: 
+    # Path to package or folder. *.zip or a folder to deploy
+    package: # optional, default is .
+    # Function app slot to be deploy to
+    slot-name: # optional
+    # Publish profile (*.publishsettings) file contents with web deploy secrets
+    publish-profile: # optional
+    # Automatically look up Java function app artifact from pom.xml (default: 'false'). When this is set to 'true', 'package' should point to the folder of host.json.
+    respect-pom-xml: # optional, default is false
+    # Remove unwanted files defined in .funcignore file (default: 'false'). When this is set to 'true', 'package' should point to the folder of host.json.
+    respect-funcignore: # optional, default is false
+    # Enable build action from Kudu when the package is deployed onto the function app. This will temporarily change the SCM_DO_BUILD_DURING_DEPLOYMENT setting for this deployment. To bypass this and use the existing settings from your function app, please set this to an empty string ''. To enable remote build for your project, please set this and 'enable-oryx-build' both to 'true'. By default, GitHub Action respects the packages resolved in GitHub workflow, disabling the redundant build action from Kudu endpoint. (default: 'false').
+    scm-do-build-during-deployment: # optional, default is false
+    # Use Oryx Build from Kudu when the package is deployed onto the function app. (Linux functions only). This will temporarily change the ENABLE_ORYX_BUILD setting from this deployment. To bypass this and use the existing settings from your function app, please set this to an empty string ''. To enable remote build for your project, please set this and 'scm-do-build-during-deployment' both to 'true'. By default, GitHub Action respects the packages resolved in GitHub workflow, disabling the redundant build action from Kudu endpoint. (default: 'false').
+    enable-oryx-build: # optional, default is false
+    
+    - name: Setup C++ environment
+  # You may pin to the exact commit or the version.
+  # uses: kurocha/setup-cpp@ef637353b9bec350da9c1088b73d2217d2441696
+  uses: kurocha/setup-cpp@v1
+  
+  - name: Setup Node.js environment
+  uses: actions/setup-node@v2.4.0
+  with:
+    # Set always-auth in npmrc
+    always-auth: # optional, default is false
+    # Version Spec of the version to use.  Examples: 12.x, 10.15.1, >=10.15.0
+    node-version: # optional
+    # Target architecture for Node to use. Examples: x86, x64. Will use system architecture by default.
+    architecture: # optional
+    # Set this option if you want the action to check for the latest available version that satisfies the version spec
+    check-latest: # optional
+    # Optional registry to set up for auth. Will set the registry in a project level .npmrc and .yarnrc file, and set up auth to read in from env.NODE_AUTH_TOKEN
+    registry-url: # optional
+    # Optional scope for authenticating against scoped registries
+    scope: # optional
+    # Used to pull node distributions from node-versions.  Since there's a default, this is typically not supplied by the user.
+    token: # optional, default is ${{ github.token }}
+    # Used to specify a package manager for caching in the default directory. Supported values: npm, yarn, pnpm
+    cache: # optional
+    # Used to specify the path to a dependency file: package-lock.json, yarn.lock, etc. Supports wildcards or a list of file names for caching multiple dependencies.
+    cache-dependency-path: # optional
+    # Deprecated. Use node-version instead. Will not be supported after October 1, 2019
+    version: # optional
+  
+  
+  - name: REST API Fuzz Testing (RAFT) Action
+  uses: microsoft/raft-action@v4.2
+  with:
+    # Setting the mode to azure will deploy against your azure RAFT deployment
+    mode: # optional, default is local
+    # RAFT CLI arguments
+    arguments: 
+    # Copy logs to this directory
+    logDirectory: # optional, default is .raft
+    # RAFT defaults.json contents
+    raftDefaults: # optional
+    # Service Principal secret for RAFT deployment
+    secret: # optional
+    # Set to disable to not log anonymized telemetry
+    telemetry: # optional, default is enabled
+    
+        pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
+        npm install
+        npm run build --if-present
+        npm run test --if-present
+        popd
+
+    - name: 'Run Azure Functions Action'
+      uses: Azure/functions-action@v1
+      id: fa
+      with:
+        app-name: 'AtlasICE'
+        slot-name: 'production'
+        package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_29333374a81849d981265f2dde0184e4 }}
