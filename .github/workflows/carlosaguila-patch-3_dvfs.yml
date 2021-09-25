@@ -1,0 +1,519 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy Node.js app to Azure Web App - dvfs
+
+on:
+  push:
+    branches:
+      - carlosaguila-patch-3
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Node.js version
+        uses: actions/setup-node@v1
+        with:
+          node-version: '14.x'
+
+      - name: npm install, build, and test
+        run: |
+          npm install
+          npm run build --if-present
+          npm run test --if-present
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v2
+        with:
+          name: node-app
+          path: .
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v2
+        with:
+          name: node-app
+
+      - name: 'Deploy to Azure Web App'
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'dvfs'
+          slot-name: 'Production'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_18F84EFCFAF1405781FC55B59BAC060D }}
+          package: .
+          
+          
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include "id_translation_result.h"
+
+OpenAPI_id_translation_result_t *OpenAPI_id_translation_result_create(
+    char *supported_features,
+    char *supi,
+    char *gpsi
+    )
+{
+    OpenAPI_id_translation_result_t *id_translation_result_local_var = OpenAPI_malloc(sizeof(OpenAPI_id_translation_result_t));
+    if (!id_translation_result_local_var) {
+        return NULL;
+    }
+    id_translation_result_local_var->supported_features = supported_features;
+    id_translation_result_local_var->supi = supi;
+    id_translation_result_local_var->gpsi = gpsi;
+
+    return id_translation_result_local_var;
+}
+
+void OpenAPI_id_translation_result_free(OpenAPI_id_translation_result_t *id_translation_result)
+{
+    if (NULL == id_translation_result) {
+        return;
+    }
+    OpenAPI_lnode_t *node;
+    ogs_free(id_translation_result->supported_features);
+    ogs_free(id_translation_result->supi);
+    ogs_free(id_translation_result->gpsi);
+    ogs_free(id_translation_result);
+}
+
+cJSON *OpenAPI_id_translation_result_convertToJSON(OpenAPI_id_translation_result_t *id_translation_result)
+{
+    cJSON *item = NULL;
+
+    if (id_translation_result == NULL) {
+        ogs_error("OpenAPI_id_translation_result_convertToJSON() failed [IdTranslationResult]");
+        return NULL;
+    }
+
+    item = cJSON_CreateObject();
+    if (id_translation_result->supported_features) {
+        if (cJSON_AddStringToObject(item, "supportedFeatures", id_translation_result->supported_features) == NULL) {
+            ogs_error("OpenAPI_id_translation_result_convertToJSON() failed [supported_features]");
+            goto end;
+        }
+    }
+
+    if (!id_translation_result->supi) {
+        ogs_error("OpenAPI_id_translation_result_convertToJSON() failed [supi]");
+        goto end;
+    }
+    if (cJSON_AddStringToObject(item, "supi", id_translation_result->supi) == NULL) {
+        ogs_error("OpenAPI_id_translation_result_convertToJSON() failed [supi]");
+        goto end;
+    }
+
+    if (id_translation_result->gpsi) {
+        if (cJSON_AddStringToObject(item, "gpsi", id_translation_result->gpsi) == NULL) {
+            ogs_error("OpenAPI_id_translation_result_convertToJSON() failed [gpsi]");
+            goto end;
+        }
+    }
+
+end:
+    return item;
+}
+
+OpenAPI_id_translation_result_t *OpenAPI_id_translation_result_parseFromJSON(cJSON *id_translation_resultJSON)
+{
+    OpenAPI_id_translation_result_t *id_translation_result_local_var = NULL;
+    cJSON *supported_features = cJSON_GetObjectItemCaseSensitive(id_translation_resultJSON, "supportedFeatures");
+
+    if (supported_features) {
+        if (!cJSON_IsString(supported_features)) {
+            ogs_error("OpenAPI_id_translation_result_parseFromJSON() failed [supported_features]");
+            goto end;
+        }
+    }
+
+    cJSON *supi = cJSON_GetObjectItemCaseSensitive(id_translation_resultJSON, "supi");
+    if (!supi) {
+        ogs_error("OpenAPI_id_translation_result_parseFromJSON() failed [supi]");
+        goto end;
+    }
+
+
+    if (!cJSON_IsString(supi)) {
+        ogs_error("OpenAPI_id_translation_result_parseFromJSON() failed [supi]");
+        goto end;
+    }
+
+    cJSON *gpsi = cJSON_GetObjectItemCaseSensitive(id_translation_resultJSON, "gpsi");
+
+    if (gpsi) {
+        if (!cJSON_IsString(gpsi)) {
+            ogs_error("OpenAPI_id_translation_result_parseFromJSON() failed [gpsi]");
+            goto end;
+        }
+    }
+
+    id_translation_result_local_var = OpenAPI_id_translation_result_create (
+        supported_features ? ogs_strdup(supported_features->valuestring) : NULL,
+        ogs_strdup(supi->valuestring),
+        gpsi ? ogs_strdup(gpsi->valuestring) : NULL
+        );
+
+    return id_translation_result_local_var;
+end:
+    return NULL;
+}
+
+OpenAPI_id_translation_result_t *OpenAPI_id_translation_result_copy(OpenAPI_id_translation_result_t *dst, OpenAPI_id_translation_result_t *src)
+{
+    cJSON *item = NULL;
+    char *content = NULL;
+
+    ogs_assert(src);
+    item = OpenAPI_id_translation_result_convertToJSON(src);
+    if (!item) {
+        ogs_error("OpenAPI_id_translation_result_convertToJSON() failed");
+        return NULL;
+    }
+
+    content = cJSON_Print(item);
+    cJSON_Delete(item);
+
+    if (!content) {
+        ogs_error("cJSON_Print() failed");
+        return NULL;
+    }
+
+    item = cJSON_Parse(content);
+    ogs_free(content);
+    if (!item) {
+        ogs_error("cJSON_Parse() failed");
+        return NULL;
+    }
+
+    OpenAPI_id_translation_result_free(dst);
+    dst = OpenAPI_id_translation_result_parseFromJSON(item);
+    cJSON_Delete(item);
+
+    return dst;
+}
+
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string"
+        },
+        "networkInterfaceName": {
+            "type": "string"
+        },
+        "networkSecurityGroupName": {
+            "type": "string"
+        },
+        "networkSecurityGroupRules": {
+            "type": "array"
+        },
+        "subnetName": {
+            "type": "string"
+        },
+        "virtualNetworkName": {
+            "type": "string"
+        },
+        "addressPrefixes": {
+            "type": "array"
+        },
+        "subnets": {
+            "type": "array"
+        },
+        "publicIpAddressName": {
+            "type": "string"
+        },
+        "publicIpAddressType": {
+            "type": "string"
+        },
+        "publicIpAddressSku": {
+            "type": "string"
+        },
+        "virtualMachineName": {
+            "type": "string"
+        },
+        "virtualMachineComputerName": {
+            "type": "string"
+        },
+        "virtualMachineRG": {
+            "type": "string"
+        },
+        "osDiskType": {
+            "type": "string"
+        },
+        "virtualMachineSize": {
+            "type": "string"
+        },
+        "adminUsername": {
+            "type": "string"
+        },
+        "adminPassword": {
+            "type": "secureString"
+        },
+        "zone": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
+        "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]"
+    },
+    "resources": [
+        {
+            "name": "[parameters('networkInterfaceName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2018-10-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]",
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+                "[concat('Microsoft.Network/publicIpAddresses/', parameters('publicIpAddressName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIpAddress": {
+                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[variables('nsgId')]"
+                }
+            }
+        },
+        {
+            "name": "[parameters('networkSecurityGroupName')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-02-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": "[parameters('networkSecurityGroupRules')]"
+            }
+        },
+        {
+            "name": "[parameters('virtualNetworkName')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-11-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[parameters('addressPrefixes')]"
+                },
+                "subnets": "[parameters('subnets')]"
+            }
+        },
+        {
+            "name": "[parameters('publicIpAddressName')]",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2019-02-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
+            },
+            "sku": {
+                "name": "[parameters('publicIpAddressSku')]"
+            },
+            "zones": [
+                "[parameters('zone')]"
+            ]
+        },
+        {
+            "name": "[parameters('virtualMachineName')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2021-03-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('virtualMachineSize')]"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "[parameters('osDiskType')]"
+                        }
+                    },
+                    "imageReference": {
+                        "publisher": "cloud-infrastructure-services",
+                        "offer": "nodjs-ubuntu-20-04",
+                        "sku": "nodejs-ubuntu-20-04",
+                        "version": "latest"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachineComputerName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "linuxConfiguration": {
+                        "patchSettings": {
+                            "patchMode": "ImageDefault"
+                        }
+                    }
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true
+                    }
+                }
+            },
+            "plan": {
+                "name": "nodejs-ubuntu-20-04",
+                "publisher": "cloud-infrastructure-services",
+                "product": "nodjs-ubuntu-20-04"
+            },
+            "identity": {
+                "type": "systemAssigned"
+            },
+            "zones": [
+                "[parameters('zone')]"
+            ]
+        }
+    ],
+    "outputs": {
+        "adminUsername": {
+            "type": "string",
+            "value": "[parameters('adminUsername')]"
+        }
+    }
+}
+
+- name: Deploy Environment
+  # You may pin to the exact commit or the version.
+  # uses: parasoft/deploy-environment-action@486e9382c6c2958fcbaad60b895da799d16730c2
+  uses: parasoft/deploy-environment-action@1.0.2
+  with:
+    # CTP URL
+    ctpUrl: 
+    # CTP Username
+    ctpUsername: 
+    # CTP Password
+    ctpPassword: 
+    # Name of the system
+    system: 
+    # Name of the environment
+    environment: 
+    # Name of the environment instance to provision
+    instance: 
+    # Fail action and abort on provisioning failure
+    abortOnFailure: # optional
+    # Virtual assets in the environment will be replicated on another server
+    copyToVirtualize: # optional
+    # The environment assets will be copied to a Virtualize server matching this name
+    virtServerName: # optional
+    # The name for the replicated environment can be used to later destroy the environment
+    newEnvironmentName: # optional
+    # Duplicate associated data repositories before provisioning
+    duplicateDataRepo: # optional
+    # Where to duplicate data repository
+    duplicateType: # optional
+    # The host of the data repository server
+    repoHost: # optional
+    # The port of the data repository server
+    repoPort: # optional
+    # The username of the data repository server
+    repoUsername: # optional
+    # The password of the data repository server
+    repoPassword: # optional
+    
+    - name: Azure Functions Action
+  uses: Azure/functions-action@v1.4.4
+  with:
+    # Name of the Azure Function App
+    app-name: 
+    # Path to package or folder. *.zip or a folder to deploy
+    package: # optional, default is .
+    # Function app slot to be deploy to
+    slot-name: # optional
+    # Publish profile (*.publishsettings) file contents with web deploy secrets
+    publish-profile: # optional
+    # Automatically look up Java function app artifact from pom.xml (default: 'false'). When this is set to 'true', 'package' should point to the folder of host.json.
+    respect-pom-xml: # optional, default is false
+    # Remove unwanted files defined in .funcignore file (default: 'false'). When this is set to 'true', 'package' should point to the folder of host.json.
+    respect-funcignore: # optional, default is false
+    # Enable build action from Kudu when the package is deployed onto the function app. This will temporarily change the SCM_DO_BUILD_DURING_DEPLOYMENT setting for this deployment. To bypass this and use the existing settings from your function app, please set this to an empty string ''. To enable remote build for your project, please set this and 'enable-oryx-build' both to 'true'. By default, GitHub Action respects the packages resolved in GitHub workflow, disabling the redundant build action from Kudu endpoint. (default: 'false').
+    scm-do-build-during-deployment: # optional, default is false
+    # Use Oryx Build from Kudu when the package is deployed onto the function app. (Linux functions only). This will temporarily change the ENABLE_ORYX_BUILD setting from this deployment. To bypass this and use the existing settings from your function app, please set this to an empty string ''. To enable remote build for your project, please set this and 'scm-do-build-during-deployment' both to 'true'. By default, GitHub Action respects the packages resolved in GitHub workflow, disabling the redundant build action from Kudu endpoint. (default: 'false').
+    enable-oryx-build: # optional, default is false
+    
+    - name: Deploy Azure Resource Manager (ARM) Template
+  uses: Azure/arm-deploy@v1
+  with:
+    # Provide the scope of the deployment. Valid values are: 'resourcegroup', 'managementgroup', 'subscription'
+    scope: 
+    # Override the Subscription Id set by Azure Login.
+    subscriptionId: # optional
+    # Specify the Id for the Management Group, only required for Management Group Deployments.
+    managementGroupId: # optional
+    # Provide the target region, only required for management Group or Subscription deployments.
+    region: # optional
+    # Provide the name of a resource group, only required for resource Group deployments.
+    resourceGroupName: # optional
+    # Specify the path or URL to the Azure Resource Manager template.
+    template: 
+    # Incremental (only add resources to resource group) or Complete (remove extra resources from resource group) or Validate (only validates the template).
+    deploymentMode: # optional
+    # Specifies the name of the resource group deployment to create.
+    deploymentName: # optional
+    # Supply deployment parameter values.
+    parameters: # optional
+    # Specify whether to fail the action if some data is written to stderr stream of az cli. Valid values are: true, false
+    failOnStdErr: # optional, default is true
+    
+    - name: Deploy Azure Resource Manager (ARM) Template
+  uses: Azure/arm-deploy@v1
+  with:
+    # Provide the scope of the deployment. Valid values are: 'resourcegroup', 'managementgroup', 'subscription'
+    scope: 
+    # Override the Subscription Id set by Azure Login.
+    subscriptionId: # optional
+    # Specify the Id for the Management Group, only required for Management Group Deployments.
+    managementGroupId: # optional
+    # Provide the target region, only required for management Group or Subscription deployments.
+    region: # optional
+    # Provide the name of a resource group, only required for resource Group deployments.
+    resourceGroupName: # optional
+    # Specify the path or URL to the Azure Resource Manager template.
+    template: 
+    # Incremental (only add resources to resource group) or Complete (remove extra resources from resource group) or Validate (only validates the template).
+    deploymentMode: # optional
+    # Specifies the name of the resource group deployment to create.
+    deploymentName: # optional
+    # Supply deployment parameter values.
+    parameters: # optional
+    # Specify whether to fail the action if some data is written to stderr stream of az cli. Valid values are: true, false
+    failOnStdErr: # optional, default is true
+    
+    
+

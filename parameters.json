@@ -1,0 +1,123 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+
+        "dashboards_1e516468_992f_4dac_bb87_34b2b6aeb19a_name": {
+            "value": null
+        },
+        "dashboards_3a942ba3_aff1_4a67_b143_dca319dd8344_name": {
+            "value": null
+        },
+        "dashboards_3d409dfc_1181_451f_869a_710b1f1b7093_name": {
+            "value": null
+        },
+        "dashboards_4866ef76_f0a7_47e2_a761_d2a9cbbf1bbf_name": {
+            "value": null
+        },
+        "dashboards_6f1fb91b_812f_44f7_9f65_4859394e69af_name": {
+            "value": null
+        },
+        "dashboards_6f1fb91b_812f_44f7_9f65_4859394e69ef_name": {
+            "value": null
+        },
+        "dashboards_7ffee635_ce30_42a0_bc22_bb138ec4b2ca_name": {
+            "value": null
+        },
+        "dashboards_80e5d04e_4023_47ae_8149_2ef26b0cc509_name": {
+            "value": null
+        },
+        "dashboards_8411c122_1940_454b_8050_c9a8d46130a8_name": {
+            "value": null
+        },
+        "dashboards_8538132e_53c2_41bb_bbee_fe94aa8557f9_name": {
+            "value": null
+        },
+        "dashboards_9effa0b6_7c03_4f63_ac90_1612eb4af398_name": {
+            "value": null
+        },
+        "dashboards_a22d1b00_1bab_4e72_ac5d_e2b6dfcec048_name": {
+            "value": null
+        },
+        "dashboards_b026d07d_d448_406a_9053_53593ee8149e_name": {
+            "value": null
+        },
+        "dashboards_b177a8f8_f751_4d9c_b206_5b09b2f5214a_name": {
+            "value": null
+        },
+        "dashboards_b22472c1_eea7_4e87_bd9b_a2a61eb10066_name": {
+            "value": null
+        },
+        "dashboards_b22472c1_eea7_4e87_bd9b_a2a61eb10164_name": {
+            "value": null
+        },
+        "dashboards_b4d5e2d1_dde7_40b5_b241_c7afa608f5e3_name": {
+            "value": null
+        },
+        "dashboards_bee494e8_c128_4c42_8cb5_d15feb3de124_name": {
+            "value": null
+        },
+        "dashboards_c371b1dd_a3b4_4675_8d8f_9346829e313d_name": {
+            "value": null
+        },
+        "dashboards_cb0ce825_0248_403c_9932_49c136e020c8_name": {
+            "value": null
+        },
+        "dashboards_ccd24fa5_3c7b_42e0_8a82_7ab6cb60b294_name": {
+            "value": null
+        },
+        "dashboards_d50437fc_911f_4933_ad2b_2b831ea2d602_name": {
+            "value": null
+        },
+        "dashboards_ec081148_da6a_4db1_9d5b_cdf393b4370c_name": {
+            "value": null
+        },
+        "dashboards_f792da72_05a4_4a41_b547_efba81da5dff_name": {
+            "value": null
+        },
+        "dashboards_1df58643_9799_4644_aa7f_1a6be1fbd73b_dashboard_name": {
+            "value": null
+
+        "location": {
+            "value": "westeurope"
+        },
+        "applicationGatewayName": {
+            "value": "getaway"
+        },
+        "tier": {
+            "value": "Standard_v2"
+        },
+        "skuSize": {
+            "value": "Standard_v2"
+        },
+        "capacity": {
+            "value": 0
+        },
+        "subnetName": {
+            "value": "default"
+        },
+        "zones": {
+            "value": [
+                "3"
+            ]
+        },
+        "publicIpAddressName": {
+            "value": "aip"
+        },
+        "sku": {
+            "value": "Standard"
+        },
+        "allocationMethod": {
+            "value": "Static"
+        },
+        "publicIpZones": {
+            "value": [
+                "3"
+            ]
+        },
+        "autoScaleMaxCapacity": {
+            "value": 10
+
+        }
+    }
+}
